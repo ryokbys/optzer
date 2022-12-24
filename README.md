@@ -1,4 +1,4 @@
-# What's optzer
+# What is optzer?
 
 *optzer* is a python package for parameter optimization that can be used for any external program and for any target value obtained with the external program.
 
@@ -18,22 +18,22 @@ The *optzer* requires the following packages:
 
 It can be installed via *pip* as,
 ```bash
-$ pip install optzer
+pip install optzer
 ```
 
 You can install as a develop mode installation as,
 ```shell
-$ git clone https://github.com/ryo.kbys/optzer.git ./optzer
-$ cd optzer
-$ python setup.py sdist
-$ pip install -e .
+git clone https://github.com/ryo.kbys/optzer.git ./optzer
+cd optzer
+python setup.py sdist
+pip install -e .
 ```
 
 If you can find `optzer` command in your system via `which optzer`, the installation should be successful.
 
 # Usage
 
-Please see examples included in this repository.
+Please see [optzer documentation](http://ryokbys.web.nitech.ac.jp/contents/optzer_doc/) and examples included in this repository.
 
 # Questions and requests
 
