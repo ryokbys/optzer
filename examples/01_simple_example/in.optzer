@@ -1,0 +1,13 @@
+num_iteration       50
+
+print_level         1
+
+target        simple
+param_files   in.params.simple
+
+opt_method    cs
+cs_num_individuals   4
+cs_fraction          0.25
+# opt_method      wpe
+update_vrange        10
+fval_upper_limit     100.0

@@ -1,0 +1,6 @@
+! in.vars.optzer file contains initial trial parameters
+! and (soft and hard) parameter search ranges.
+!
+  2
+    -0.4000    -10.00    10.00    -10.00    10.00
+     2.0000    -10.00    10.00    -10.00    10.00

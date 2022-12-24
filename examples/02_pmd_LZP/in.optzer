@@ -1,0 +1,11 @@
+num_iteration       1
+print_level         1
+
+target        rdf adf vol
+param_files   in.params.Coulomb in.params.Morse in.params.angular
+
+opt_method   cs
+cs_num_individuals   4
+cs_fraction          0.25
+update_vrange        10
+fval_upper_limit     100.0
