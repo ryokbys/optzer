@@ -31,7 +31,15 @@ $ pip install -e .
 
 If you can find `optzer` command in your system via `which optzer`, the installation should be successful.
 
+# Usage
 
-# LICENSE
+Please see examples included in this repository.
+
+# Questions and requests
+
+Please leave questions and requests on issues in the github repository page.
+
+# License
+
 This software is released under the MIT License, see the LICENSE.
 
