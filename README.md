@@ -4,7 +4,7 @@
 
 # Who made this?
 * [Ryo KOBAYASHI](http://ryokbys.web.nitech.ac.jp/index.html)
-* Assistant Professor in the department of mechanical engineering, Nagoya Institute of Technology.
+* Assistant Professor at Department of Physical Science and Engineering, Nagoya Institute of Technology.
 
 # Requirements and dependencies
 
@@ -16,18 +16,20 @@ The *optzer* requires the following packages:
 
 # Installation
 
-It should be installed via *pip* (at least in the near future) as,
+It can be installed via *pip* as,
 ```bash
 $ pip install optzer
 ```
 
-The following should work as well.
+You can install as a develop mode installation as,
 ```shell
+$ git clone https://github.com/ryo.kbys/optzer.git ./optzer
+$ cd optzer
 $ python setup.py sdist
 $ pip install -e .
 ```
 
-Then you can use a command `optzer`.
+If you can find `optzer` command in your system via `which optzer`, the installation should be successful.
 
 
 # LICENSE

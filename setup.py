@@ -13,7 +13,7 @@ from setuptools import find_packages, setup, Command
 
 # Package meta-data.
 NAME = 'optzer'
-DESCRIPTION = 'This program optimizes parameters in any external programs to any target values.'
+DESCRIPTION = 'This program optimizes parameters in any external programs to any target propety.'
 URL = 'https://github.com/ryokbys/optzer'
 EMAIL = 'ryo.kbys@gmail.com'
 AUTHOR = 'Ryo KOBAYASHI'
@@ -121,6 +121,8 @@ setup(
         # Trove classifiers
         # Full list: https://pypi.python.org/pypi?%3Aaction=list_classifiers
         'License :: OSI Approved :: MIT License',
+        'Intended Audience :: Science/Research',
+        'Operating System :: POSIX :: Linux',
         'Programming Language :: Python',
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.6',
