@@ -8,8 +8,9 @@
 
 # Requirements and dependencies
 
-The *optzer* requires the following packages:
+The *optzer* requires the following:
 
+- *python3*
 - *docopt*
 - *numpy*
 - *scipy*

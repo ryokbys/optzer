@@ -2,7 +2,7 @@ import os
 import numpy as np
 
 __author__ = "RYO KOBAYASHI"
-__version__ = "221223"
+__version__ = "221226"
 
 def read_in_optzer(fname='in.optzer'):
     #...initialize
@@ -176,7 +176,6 @@ def write_info(infp,args):
     print('   num_iteration   {0:d}'.format(infp['num_iteration']))
     print('   missing_value   {0:.1f}'.format(infp['missing_value']))
     print(' ----------')
-    print()
     return None
 
 def write_vars_optzer(vs,vrs,fname='in.vars.optzer',**kwargs):
@@ -235,7 +234,6 @@ def read_vars_optzer(fname='in.vars.optzer'):
     vs = np.array(vs)
     vrs = np.array(vrs)
     vrsh = np.array(vrsh)
-    print('')
     return vs,vrs,vrsh,options,vopts
     
 
@@ -347,7 +345,8 @@ def parse_option(line):
     return k,v
 
 def read_out_cs_gen(fname='out.cs.generations'):
-    """Read out.cs.generations file."""
+    """Read out.cs.generations file.
+    Return generations, iids, and losses."""
     with open(fname,'r') as f:
         lines = f.readlines()
     gens = []

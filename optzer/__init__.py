@@ -42,7 +42,7 @@ from .cs import CS
 from .tpe import TPE
 
 __author__ = "RYO KOBAYASHI"
-__version__ = "0.1.0"
+__version__ = "0.1.2"
 
 _infname = 'in.optzer'
 
@@ -55,7 +55,7 @@ def get_data(basedir,prefix=None,**kwargs):
     targets = kwargs['target']
 
     if prefix == 'ref':
-        print(' Reference data and weights:')
+        print('\n Reference data and weights:')
 
     data = {}
     for t in targets:
@@ -239,6 +239,9 @@ def main():
     write_info(infp,args)
 
     vs,vrs,vrsh,options,vopts = read_vars_optzer(infp['vars_file'])
+    print('\n Initial variable ranges')
+    for i in range(len(vrs)):
+        print(' {0:2d}:  {1:7.3f}  {2:7.3f}'.format(i+1,vrs[i,0],vrs[i,1]))
 
     kwargs = infp
     kwargs['options'] = options
