@@ -41,7 +41,7 @@ from optzer.cs import CS
 from optzer.tpe import TPE
 
 __author__ = "RYO KOBAYASHI"
-__version__ = "0.1.2"
+__version__ = "221227"
 
 _infname = 'in.optzer'
 
