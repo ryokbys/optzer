@@ -45,22 +45,6 @@ def update_slims(slims,hlims,history_db,ntops=100):
                     break
             if len(tops) > ntops:
                 del tops[ntops:len(tops)]
-                
-    # for i,ind in enumerate(history_db):
-    #     if len(tops) < ntops:  # add the individual
-    #         for it,t in enumerate(tops):
-    #             if ind.loss < t.loss:
-    #                 tops.insert(it,ind)
-    #                 break
-    #         if not ind in tops:
-    #             tops.append(ind)
-    #     else: # insert the individual and pop out the worst one
-    #         for it,t in enumerate(tops):
-    #             if ind.loss < t.loss:
-    #                 tops.insert(it,ind)
-    #                 break
-    #         if len(tops) > ntops:
-    #             del tops[ntops:len(tops)]
 
     #...Get new ranges
     new_slims = {}

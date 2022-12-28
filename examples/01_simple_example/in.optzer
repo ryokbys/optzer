@@ -7,9 +7,9 @@ param_files   in.params.simple
 
 opt_method        cs
 # opt_method      wpe
+# tpe_nsmpl_prior   20
 num_individuals   4
 cs_fraction          0.25
-# tpe_nsmpl_prior   10
 
 update_vrange        10
 fval_upper_limit     100.0

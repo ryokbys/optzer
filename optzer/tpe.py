@@ -17,8 +17,9 @@ from multiprocessing import Process, Pool
 from time import time
 import pandas as pd
 
-from optzer.individual import Individual, ind_from_db
+from optzer.individual import Individual, ind_from_db, update_slims
 from optzer.io import write_db_optzer, read_db_optzer
+
 
 __author__ = "RYO KOBAYASHI"
 __version__ = "221228"
@@ -240,7 +241,9 @@ class TPE:
         #...Dump the DB once it is updated.
         write_db_optzer(self.history_db,fname=_fname_db)
 
-        # self.slims = update_slims(self.slims, self.hlims, self.history_db)
+        self.slims = update_slims(self.slims, self.hlims,
+                                  self.history_db,
+                                  ntops=max(100,int(len(self.history_db)*self.gamma)))
         
         #...Check best
         self.keep_best()
@@ -291,7 +294,9 @@ class TPE:
             #...Dump the DB once it is updated.
             write_db_optzer(self.history_db,fname=_fname_db)
 
-            # self.slims = update_slims(self.slims, self.hlims, self.history_db)
+            self.slims = update_slims(self.slims, self.hlims,
+                                      self.history_db,
+                                      ntops=max(100,int(len(self.history_db)*self.gamma)))
 
             #...Check best
             best_updated = False
@@ -353,8 +358,10 @@ class TPE:
         ntrial = max(self.ntrial,self.nbatch)
         for idim in range(self.ndim):
             key = self.vnames[idim]
-            xhmin = self.hlims[key][0]
-            xhmax = self.hlims[key][1]
+            # xhmin = self.hlims[key][0]
+            # xhmax = self.hlims[key][1]
+            xhmin = self.slims[key][0]
+            xhmax = self.slims[key][1]
             xlowsrt = np.sort(Xlow[:,idim])
             npnt = len(xlowsrt)
             #...Determine smoothness parameter, h, by Silverman's method
@@ -431,8 +438,10 @@ class TPE:
         xcandidates = np.empty((self.nbatch,self.ndim))
         for idim in range(self.ndim):
             key = self.vnames[idim]
-            xhmin = self.hlims[key][0]
-            xhmax = self.hlims[key][1]
+            # xhmin = self.hlims[key][0]
+            # xhmax = self.hlims[key][1]
+            xhmin = self.slims[key][0]
+            xhmax = self.slims[key][1]
             xsrt = np.sort(xtmps[:,idim])
             #...Determine smoothness parameter, h, by Silverman's method
             q75, q25 = np.percentile(xsrt, [75,25])
