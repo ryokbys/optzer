@@ -70,10 +70,10 @@ def read_in_optzer(fname='in.optzer'):
         elif data[0] == 'tpe_gamma':
             infp['tpe_gamma'] = float(data[1])
             mode = None
-        elif '_nsmpl_prior' in data[0]:
+        elif 'tpe_nsmpl_prior' in data[0]:
             infp['tpe_nsmpl_prior'] = int(data[1])
             mode = None
-        elif '_ntrial' in data[0]:
+        elif 'tpe_ntrial' in data[0]:
             infp['tpe_ntrial'] = int(data[1])
             mode = None
         elif data[0] == 'update_vrange':

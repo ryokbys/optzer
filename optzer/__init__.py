@@ -279,9 +279,8 @@ def main():
         opt = CS(nind, frac, vnames, vs, slims, hlims, func_wrapper,
                  write_vars_optzer, nproc=nproc, seed=seed, **kwargs)
     elif kwargs['opt_method'] in ('tpe','TPE','wpe','WPE'):
-        nbatch = nproc
-        opt = TPE(nbatch, vnames, vs, slims, hlims, func_wrapper,
-                   write_vars_optzer, seed=seed, **kwargs)
+        opt = TPE(nproc, vnames, vs, slims, hlims, func_wrapper,
+                  write_vars_optzer, seed=seed, **kwargs)
     
     opt.run(maxiter)
 

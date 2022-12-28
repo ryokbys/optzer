@@ -15,22 +15,15 @@ import random
 import copy
 from multiprocessing import Process, Pool
 from time import time
+import pandas as pd
 
-from optzer.individual import Individual
+from optzer.individual import Individual, ind_from_db
+from optzer.io import write_db_optzer, read_db_optzer
 
 __author__ = "RYO KOBAYASHI"
 __version__ = "221228"
 
-def random_variables(slims):
-    """
-    Create random variables within the given ranges.
-    """
-    rvs = np.empty(len(slims))
-    for i in range(len(slims)):
-        vmin, vmax = slims[i]
-        rvs[i] = np.random.random()*(vmax -vmin) +vmin
-        # print(' i,vmin,vmax,v=',i,vmin,vmax,v)
-    return rvs
+_fname_db = 'db.optzer.json'
 
 def gauss_kernel(x):
     return np.exp(-0.5*x*x)/np.sqrt(2.0*np.pi)
@@ -76,35 +69,37 @@ class TPE:
       1. Bergstra, J., Bardenet, R., Bengio, Y. & Kégl, B.  in Proc. NIPS-24th, 2546–2554
     """
 
-    def __init__(self, nbatch, vs, slims, hlims, loss_func,
-                 write_func, seed=42, **kwargs):
+    def __init__(self, nbatch, vnames, vs0, slims, hlims, loss_func,
+                 write_func=None, seed=42, **kwargs):
         """
         Conctructor of TPE class.
 
         Parameters:
           nbatch : int
-            Number of samples in a batch which is the same as num of processes.
-          vs : 1-D np.array
-            np.array of variables to be optimized.
-          slims : 2-D np.array
-            Current lower and upper limit of variables, which are used only at random sampling processes.
-          hlims : 2-D np.array
-            Hard limits of variables, which are fixed during TPE iterations. 
+              Number of samples in a batch which is the same as num of processes.
+          vs0 : dict
+              Initial guess of variables.
+          slims : dict
+              Current lower and upper limit of variables, which are used only at random sampling processes.
+          hlims : dict
+              Hard limits of variables, which are fixed during TPE iterations. 
           loss_func : function
-            Loss function to be minimized with variables and **kwargs.
+              Loss function to be minimized with variables and **kwargs.
           write_func : function
-            Function for outputing some info.
+              Function for outputing some info.
         """
         if nbatch < 1:
             raise ValueError('nbatch must be > 0.')
         np.random.seed(seed)
         random.seed(seed)
         self.nbatch = nbatch
-        self.ndim = len(vs)
-        self.vs = vs
-        self.slims = slims
+        self.ndim = len(vs0)
+        self.vnames = vnames
+        self.vs0 = vs0
         self.hlims = hlims
-        self.vlogs = { k:False for k in vs.keys() }
+        #self.slims = slims
+        self.slims = hlims  # Since slims is not used, use hlims instead as slims
+        self.vlogs = { k:False for k in vnames }
         if 'vlogs' in kwargs.keys():
             self.vlogs = kwargs['vlogs']
         self.loss_func = loss_func
@@ -115,7 +110,6 @@ class TPE:
         self.nsmpl_prior = 100
         self.ntrial = 100
         self.method = kwargs['opt_method']
-        self.fname_smpl = 'out.{0:s}.samples'.format(self.method)
 
         self.gamma = 0.15
         #...Change default values if specified
@@ -134,55 +128,84 @@ class TPE:
         #...Write info
         print('')
         if self.method in ('wpe','WPE'):
-            print('   {0:s} infomation:'.format(self.method))
-            print(f'     Num of prior samples = {self.nsmpl_prior:d}')
-            print(f'     Num of top samples used for density estimation = {self.ntrial:d}')
+            print(' {0:s} infomation:'.format(self.method))
+            print(f'   Num of prior samples = {self.nsmpl_prior:d}')
+            print(f'   Num of top samples used for density estimation = {self.ntrial:d}')
         elif self.method in ('tpe','TPE'):
-            print('   {0:s} infomation:'.format(self.method))
-            print(f'     Num of prior samples = {self.nsmpl_prior:d}')
-            print(f'     Num of trials for sampling = {self.ntrial:d}')
-            print(f'     Gamma for dividing high and low = {self.gamma:4.2f}')
+            print(' {0:s} infomation:'.format(self.method))
+            print(f'   Num of prior samples = {self.nsmpl_prior:d}')
+            print(f'   Num of trials for sampling = {self.ntrial:d}')
+            print(f'   Gamma for dividing high and low = {self.gamma:4.2f}')
         print('')
     
         #...Change vrange if log domain
-        for k in vlogs:
-            self.vs[k] = np.log(self.vs[k])
+        for k,v in self.vlogs.items():
+            if not v: continue
+            self.vs0[k] = np.log(self.vs0[k])
             for l in range(2):
                 self.slims[k][l] = np.log(self.slims[k][l])
                 self.hlims[k][l] = np.log(self.hlims[k][l])
         # for i in range(self.ndim):
         #     if self.vlogs[i]:
-        #         self.vs[i] = np.log(self.vs[i])
+        #         self.vs0[i] = np.log(self.vs0[i])
         #         for l in range(2):
         #             self.slims[i,l] = np.log(self.slims[i,l])
         #             self.hlims[i,l] = np.log(self.hlims[i,l])
 
-        #...Initialize sample history
-        self.history = []  # History of all samples
-        self.iidinc = 0
-        for i in range(self.nbatch):
-            self.iidinc += 1
-            smpl = Individual(self.iidinc, self.vname, self.slims,
-                              self.hlims, self.loss_func)
-            if i == 0:
-                smpl.set_variables(self.vs)
-            else:
-                smpl.set_variables(random_variables(self.slims))
-            self.history.append(smpl)
+        cols = ['iid','loss','gen'] +self.vnames
+        self.history_db = pd.DataFrame(columns=cols)  # History of all samples
+        #...Try to restart by loading db.optzer.json if exists
+        if os.path.exists(_fname_db):
+            try:
+                self.history_db = pd.read_json(_fname_db)
+            except Exception as e:
+                print(e)
+                print(f'\n !!! Failed to load {_fname_db} for restart. !!!'
+                      +'\n !!! So start with the given initial guess.     !!!')
+            print(f'\n Restarting with existing DB, {_fname_db}.')
 
+        #...Initialize sample history
+        self.candidates = []
+        self.igen0 = 0
+        self.bestsmpl = None
+        if len(self.history_db) == 0:
+            self.iidinc = 0
+            for i in range(self.nbatch):
+                self.iidinc += 1
+                smpl = Individual(self.iidinc, self.vnames )
+                if i == 0:
+                    smpl.set_variables(self.vs0, self.slims)
+                else:
+                    smpl.init_random(self.slims)
+                self.candidates.append(smpl)
+        else:  # DB loaded
+            #...Get best one from the DB
+            bestidx = self.history_db.loss.argmin()
+            self.bestsmpl = ind_from_db(self.history_db,
+                                        bestidx,
+                                        self.vnames, self.slims)
+            #...Generate random population with the updated slims
+            self.iidinc = int(self.history_db.iid.max()) +1
+            self.igen0 = int(self.history_db.gen.max()) +1
+            for i in range(self.nbatch):
+                ind = Individual(self.iidinc, self.vnames)
+                ind.init_random(self.slims)
+                self.candidates.append(ind)
+                self.iidinc += 1
+            
         return None
 
     def keep_best(self):
         losses = []
-        for i,si in enumerate(self.history):
+        for i,si in enumerate(self.candidates):
             if si.loss == None:
                 raise ValueError('Something went wrong.')
             losses.append(si.loss)
 
-        minloss = min(losss)
+        minloss = min(losses)
         if self.bestsmpl == None or minloss < self.bestsmpl.loss:
-            idx = losss.index(minloss)
-            self.bestsmpl = copy.deepcopy(self.history[idx])
+            idx = losses.index(minloss)
+            self.bestsmpl = copy.deepcopy(self.candidates[idx])
         return None
 
     def run(self,maxstp=0):
@@ -192,187 +215,146 @@ class TPE:
 
         starttime = time()
 
-        fsmpl = open(self.fname_smpl,'w')
-        #...Headers
-        fsmpl.write('# {0:>7s}  {1:>12s}'.format('iid', 'loss'))
-        # for i in range(len(self.history[0].vs)):
-        #     fsmpl.write(' {0:>8d}-th'.format(i+1))
-        for k in self.vnames:
-            find.write(f' {k:>8s}')
-        fsmpl.write('\n')
-
         #...Create pool before going into maxstp-loop,
         #...since creating pool inside could cause "Too many files" error.
         pool = Pool(processes=self.nbatch)
 
         #...Evaluate sample losses of initial sets
         prcs = []
-        for i,ci in enumerate(self.history):
+        for i,ci in enumerate(self.candidates):
             kwtmp = copy.copy(self.kwargs)
             kwtmp['index'] = i
             kwtmp['iid'] = ci.iid
-            prcs.append(pool.apply_async(ci.calc_loss_func, kwtmp))
+            prcs.append(pool.apply_async(ci.calc, (self.loss_func,kwtmp,)))
 
         results = [ res.get() for res in prcs ]
         for res in results:
             loss, i = res
-            self.history[i].loss = loss
-        #self.history.extend(candidates) # not need
+            self.candidates[i].loss = loss
+            self.candidates[i].gen = self.igen0
+        db_add = [ ci.to_DataFrame() for ci in self.candidates ]
+        self.history_db = pd.concat([self.history_db] +db_add)
+        self.history_db.drop_duplicates(subset='iid',
+                                        inplace=True,
+                                        ignore_index=True)
+        #...Dump the DB once it is updated.
+        write_db_optzer(self.history_db,fname=_fname_db)
 
-        self._update_slims()
+        # self.slims = update_slims(self.slims, self.hlims, self.history_db)
         
         #...Check best
-        self.bestsmpl = self.history[0]
-        for si in self.history[1:]:
-            if si.loss < self.bestsmpl.loss:
-                self.bestsmpl = si
-        fname = 'in.vars.optzer.{0:d}'.format(self.bestsmpl.iid)
+        self.keep_best()
         self.write_variables(self.bestsmpl,
-                             fname=fname,
+                             fname='in.vars.optzer.best',
                              **self.kwargs)
-        os.system('cp -f {0:s} in.vars.optzer.best'.format(fname))
         
-        #...Write sample data
-        for i,si in enumerate(self.history):
-            self._write_smpl_data(fsmpl,si)
-
         if self.print_level > 0:
-            self._write_step_info(0,starttime)
+            self._write_step_info(self.igen0,starttime)
 
         #...TPE loop starts
-        for istp in range(1,maxstp):
+        for igen in range(self.igen0+1, self.igen0+1+maxstp):
             #...Create candidates by either random or TPE
-            if len(self.history) <= self.nsmpl_prior:
+            if len(self.history_db) <= self.nsmpl_prior:
                 #...Create random candidates
-                candidates = []
+                self.candidates = []
                 for i in range(self.nbatch):
                     self.iidinc += 1
-                    newsmpl = Individual(self.iidinc, self.vnames, self.slims,
-                                         self.hlims, self.loss_func)
-                    newsmpl.set_variables(random_variables(self.slims))
-                    candidates.append(newsmpl)
+                    newsmpl = Individual(self.iidinc, self.vnames)
+                    newsmpl.init_random(self.slims)
+                    self.candidates.append(newsmpl)
             else:
                 if self.method in ('wpe,''WPE'):
                     #...Create candidates by WPE
-                    candidates = self._candidates_by_WPE()
+                    self.candidates = self._candidates_by_WPE()
                 else:
                     #...Create candidates by TPE
-                    candidates = self._candidates_by_TPE()
-                    
+                    self.candidates = self._candidates_by_TPE()
 
             #...Evaluate sample losses
             prcs = []
-            for i,ci in enumerate(candidates):
+            for i,ci in enumerate(self.candidates):
                 kwtmp = copy.copy(self.kwargs)
                 kwtmp['index'] = i
                 kwtmp['iid'] = ci.iid
-                prcs.append(pool.apply_async(ci.calc_loss_func, kwtmp))
+                prcs.append(pool.apply_async(ci.calc, (self.loss_func,kwtmp,)))
 
             results = [ res.get() for res in prcs ]
             for res in results:
                 loss, i = res
-                candidates[i].loss = loss
-            self.history.extend(candidates)
+                self.candidates[i].loss = loss
+                self.candidates[i].gen = igen+1
+            db_add = [ c.to_DataFrame() for c in self.candidates ]
+            self.history_db = pd.concat([self.history_db] +db_add)
+            self.history_db.drop_duplicates(subset='iid',
+                                            inplace=True,
+                                            ignore_index=True)
+            #...Dump the DB once it is updated.
+            write_db_optzer(self.history_db,fname=_fname_db)
 
-            self._update_slims()
+            # self.slims = update_slims(self.slims, self.hlims, self.history_db)
 
-            #...Check the best
+            #...Check best
             best_updated = False
-            for si in self.history[-self.nbatch:]:
-                if si.loss < self.bestsmpl.loss:
-                    self.bestsmpl = si
+            for ip,ci in enumerate(self.candidates):
+                if ci.loss < self.bestsmpl.loss:
+                    self.bestsmpl = ci
                     best_updated = True
             if best_updated:
-                fname = 'in.vars.optzer.{0:d}'.format(self.bestsmpl.iid)
                 self.write_variables(self.bestsmpl,
-                                     fname=fname,
+                                     fname='in.vars.optzer.best',
                                      **self.kwargs)
-                os.system('cp -f {0:s} in.vars.optzer.best'.format(fname))
-
-            for i,si in enumerate(self.history[-self.nbatch:]):
-                self._write_smpl_data(fsmpl,si)
 
             #...Write info
             if self.print_level > 0:
-                self._write_step_info(istp,starttime)
+                self._write_step_info(igen,starttime)
             
-        fsmpl.close()
         pool.close()
         return None
 
-    def _write_smpl_data(self,f,smpl):
-        f.write(' {0:8d}  {1:12.4e}'.format(smpl.iid, smpl.loss))
-        for j,vj in enumerate(smpl.vs):
-            f.write(' {0:11.3e}'.format(vj))
-        f.write('\n')
-        return None
-
     def _write_step_info(self,istp,starttime):
-        print(' step,time,best,vars='
-              +' {0:6d} {1:8.1f}  {2:8.4f}'.format(istp+1, time()-starttime,
-                                                   self.bestsmpl.loss),end="")
-        for i in range(min(16,self.ndim)):
-            print(' {0:6.3f}'.format(self.bestsmpl.vs[i]),end="")
+        print(' step,time,best_iid,best_loss,vars='
+              +' {0:6d} {1:8.1f} {2:5d} {3:8.4f}'.format(istp+1,
+                                                         time()-starttime,
+                                                         self.bestsmpl.iid,
+                                                         self.bestsmpl.loss),end="")
+        inc = 0
+        for k in self.vnames:
+            if inc < 16:
+                print(' {0:6.3f}'.format(self.bestsmpl.vs[k]),end="")
+            else:
+                break
+            inc += 1
         print('', flush=True)
-        return None
-
-    def _update_slims(self,):
-        """
-        Update soft limits of variables from the top rankers in the history.
-        New slims are obtained as max distances among top rankers from the best.
-        """
-        losses = np.zeros(len(self.history))
-        for i,si in enumerate(self.history):
-            losses[i] = si.loss
-        if len(self.history) > self.ntrial:
-            iargs = np.argpartition(losses,self.ntrial)
-            tmpsmpls = [ self.history[i] for i in iargs[:self.ntrial] ]
-            losses = losses[ iargs[:self.ntrial] ]
-        else:
-            tmpsmpls = copy.copy(self.history)
-        imin = np.argmin(losses)
-        vmin = losses[imin]
-        xtmps = np.zeros((len(tmpsmpls),self.ndim))
-        for i in range(len(tmpsmpls)):
-            xtmps[i,:] = tmpsmpls[i].vs[:]
-        xmin = xtmps[imin,:]
-        xwdth = np.zeros(self.ndim)
-        for ismpl in range(len(xtmps)):
-            if ismpl==imin: continue
-            xi = xtmps[ismpl,:]
-            w = np.abs(xi-xmin)
-            for i in range(len(w)):
-                xwdth[i] = max(w[i],xwdth[i])
-        for idim in range(self.ndim):
-            self.slims[idim,0] = max(xmin[idim]-xwdth[idim],self.hlims[idim,0])
-            self.slims[idim,1] = min(xmin[idim]+xwdth[idim],self.hlims[idim,1])
         return None
 
     def _candidates_by_TPE(self,):
         """
         Create candidates by using TPE.
         """
-        losses = np.zeros(len(self.history))
-        for i,si in enumerate(self.history):
-            losses[i] = si.loss
-        nlow = int(self.gamma *len(self.history))
-        nhigh = len(self.history) -nlow
+        losses = self.history_db.loss
+        nlow = int(self.gamma *len(losses))
+        nhigh = len(losses) -nlow
         argpart = np.argpartition(losses,nlow)
         Xlow = np.zeros((nlow,self.ndim))
         Xhigh = np.zeros((nhigh,self.ndim))
         for i in range(nlow):
-            iid = argpart[i]
-            Xlow[i,:] = self.history[iid].vs[:]
+            idx = argpart[i]
+            vs = ind_from_db(self.history_db,idx,self.vnames,self.slims).vs
+            for j,k in enumerate(self.vnames):
+                Xlow[i,j] = vs[k]
         for i in range(nhigh):
-            iid = argpart[nlow+i]
-            Xhigh[i,:] = self.history[iid].vs[:]
+            idx = argpart[nlow+i]
+            vs = ind_from_db(self.history_db,idx,self.vnames,self.slims).vs
+            for j,k in enumerate(self.vnames):
+                Xhigh[i,j] = vs[k]
 
         #...Sampling variable candidates
         xcandidates = np.empty((self.nbatch,self.ndim))
         ntrial = max(self.ntrial,self.nbatch)
         for idim in range(self.ndim):
-            xhmin = self.hlims[idim,0]
-            xhmax = self.hlims[idim,1]
+            key = self.vnames[idim]
+            xhmin = self.hlims[key][0]
+            xhmax = self.hlims[key][1]
             xlowsrt = np.sort(Xlow[:,idim])
             npnt = len(xlowsrt)
             #...Determine smoothness parameter, h, by Silverman's method
@@ -416,8 +398,11 @@ class TPE:
         candidates = []
         for ib in range(self.nbatch):
             self.iidinc += 1
-            smpl = Sample(self.iidinc, self.ndim, self.loss_func)
-            smpl.set_variables(xcandidates[ib,:])
+            smpl = Individual(self.iidinc, self.vnames)
+            vsnew = {}
+            for j,k in enumerate(self.vnames):
+                vsnew[k] = xcandidates[ib,j]
+            smpl.set_variables(vsnew, self.slims)
             candidates.append(smpl)
         return candidates
 
@@ -425,25 +410,29 @@ class TPE:
         """
         Create candidates by using WPE.
         """
-        losses = np.zeros(len(self.history))
-        for i,si in enumerate(self.history):
-            losses[i] = si.loss
-        if len(self.history) > self.ntrial:
-            iargs = np.argpartition(losses,self.ntrial)
-            tmpsmpls = [ self.history[i] for i in iargs[:self.ntrial] ]
+        losses = self.history_db.loss
+        if len(self.history_db) > self.ntrial:
+            iargs = np.argpartition(losses, self.ntrial)
+            #tmpsmpls = [ self.history[i] for i in iargs[:self.ntrial] ]
+            tmpsmpls = [ ind_from_db(self.history_db,idx,self.vnames,self.slims)
+                         for idx in iargs[:self.ntrial] ]
             losses = losses[ iargs[:self.ntrial] ]
         else:
-            tmpsmpls = copy.copy(self.history)
+            #tmpsmpls = copy.copy(self.history)
+            tmpsmpls = [ ind_from_db(self.history_db,idx,self.vnames,self.slims)
+                         for idx in self.history_db.index ]
         vmin = losses.min()
         wgts = np.array([ np.exp(-(v-vmin)/vmin) for v in losses ])
         xtmps = np.zeros((len(tmpsmpls),self.ndim))
         for i in range(len(tmpsmpls)):
-            xtmps[i,:] = tmpsmpls[i].vs[:]
+            for j,k in enumerate(self.vnames):
+                xtmps[i,j] = tmpsmpls[i].vs[k]
         #...Sampling variable candidates
         xcandidates = np.empty((self.nbatch,self.ndim))
         for idim in range(self.ndim):
-            xhmin = self.hlims[idim,0]
-            xhmax = self.hlims[idim,1]
+            key = self.vnames[idim]
+            xhmin = self.hlims[key][0]
+            xhmax = self.hlims[key][1]
             xsrt = np.sort(xtmps[:,idim])
             #...Determine smoothness parameter, h, by Silverman's method
             q75, q25 = np.percentile(xsrt, [75,25])
@@ -465,15 +454,19 @@ class TPE:
         candidates = []
         for ib in range(self.nbatch):
             self.iidinc += 1
-            smpl = Sample(self.iidinc, self.ndim, self.loss_func)
-            smpl.set_variables(xcandidates[ib,:])
+            smpl = Individual(self.iidinc, self.vnames)
+            vsnew = {}
+            for j,k in enumerate(self.vnames):
+                vsnew[k] = xcandidates[ib,j]
+            smpl.set_variables(vsnew, self.slims)
             candidates.append(smpl)
         
         return candidates
 
     def write_variables(self,smpl,fname='in.vars.optzer',**kwargs):
-        self.write_func(smpl.vnames, smpl.vs, smpl.slims, smpl.hlims,
-                        fname, **kwargs)
+        if self.write_func != None:
+            self.write_func(smpl.vnames, smpl.vs, self.slims, self.hlims,
+                            fname, **kwargs)
         return None
 
 def main():

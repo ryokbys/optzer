@@ -5,9 +5,11 @@ print_level         1
 target        simple
 param_files   in.params.simple
 
-opt_method    cs
+opt_method        cs
+# opt_method      wpe
 num_individuals   4
 cs_fraction          0.25
-# opt_method      wpe
+# tpe_nsmpl_prior   10
+
 update_vrange        10
 fval_upper_limit     100.0
