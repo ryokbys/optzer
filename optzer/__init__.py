@@ -241,7 +241,7 @@ def main():
     print('\n Initial variable ranges')
     for vname in vnames:
         sl = slims[vname]
-        print(' {0:>10s}:  {1:7.3f}  {2:7.3f}'.format(vname,sl[0],sl[1]))
+        print(' {0:>15s}:  {1:7.3f}  {2:7.3f}'.format(vname,sl[0],sl[1]))
 
     kwargs = infp
     kwargs['voptions'] = voptions

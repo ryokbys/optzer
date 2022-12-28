@@ -375,3 +375,18 @@ def read_out_cs_ind(fname='out.cs.individuals'):
         losses.append(float(data[1]))
         prms.append([ float(d) for d in data[2:]])
     return iids,losses,prms
+
+def write_db_optzer(db,fname='db.optzer.json'):
+    """Write db in JSON format."""
+    with open(fname,'w') as f:
+        f.write(db.to_json())
+    return None
+
+def read_db_optzer(fname='db.optzer.json'):
+    """Read db_optzer in JSON format."""
+    try:
+        db = pd.read_json(fname)
+    except:
+        raise
+    return db
+

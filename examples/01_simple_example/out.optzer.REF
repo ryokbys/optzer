@@ -3,7 +3,7 @@
 
    Executed as /Users/kobayashi/.anyenv/envs/pyenv/versions/nap/bin/optzer --nproc 5 --random-seed 42
             at /Users/kobayashi/src/optzer/examples/01_simple_example on mbp-rk4
-            at 2022-12-24 16:05:27
+            at 2022-12-28 22:19:48
 
    Please cite:
      1) R. Kobayashi, J. Open Source Software, 6(57), 2768 (2021)
@@ -15,337 +15,340 @@
    num of processes (given by --nproc option)   5
    param_files    in.params.simple
    opt_method  cs
-   num_individuals    4
+   num_individuals   4
    fraction           0.2500
    num_iteration   50
    missing_value   1.0
  ----------
 
+ Initial variable ranges
+               a:  -10.000   10.000
+               b:  -10.000   10.000
 
  Reference data and weights:
-   simple  1.000
+           simple  1.000
 
  # iid,losses=      iid     simple      total
    iid,losses=        1    13.3795    13.37946
+   iid,losses=        4   100.0000   100.00000
    iid,losses=        3    23.8839    23.88387
    iid,losses=        2   100.0000   100.00000
-   iid,losses=        4   100.0000   100.00000
- step,time,best_iid,best_loss,vars=      0      1.2     1  13.3795 -0.400  2.000
-   iid,losses=        8   100.0000   100.00000
-   iid,losses=        6    22.7288    22.72875
-   iid,losses=        5    12.7711    12.77107
-   iid,losses=        9    10.9220    10.92202
+ step,time,best_iid,best_loss,vars=      0      0.8     1  13.3795 -0.400  2.000
    iid,losses=        7   100.0000   100.00000
- step,time,best_iid,best_loss,vars=      1      2.0     9  10.9220  3.685 -1.197
+   iid,losses=        8   100.0000   100.00000
+   iid,losses=        5    12.7711    12.77107
+   iid,losses=        6    22.7288    22.72875
+   iid,losses=        9    10.9220    10.92202
+ step,time,best_iid,best_loss,vars=      1      1.3     9  10.9220  3.685 -1.197
    iid,losses=       12    15.7333    15.73334
    iid,losses=       14   100.0000   100.00000
    iid,losses=       10     9.0144     9.01439
-   iid,losses=       13    24.9918    24.99175
    iid,losses=       11    15.6288    15.62877
- step,time,best_iid,best_loss,vars=      2      2.1    10   9.0144  3.681  0.851
+   iid,losses=       13    24.9918    24.99175
+ step,time,best_iid,best_loss,vars=      2      1.4    10   9.0144  3.681  0.851
+   iid,losses=       19   100.0000   100.00000
+   iid,losses=       18   100.0000   100.00000
    iid,losses=       17   100.0000   100.00000
    iid,losses=       16     9.7125     9.71245
-   iid,losses=       18   100.0000   100.00000
-   iid,losses=       19   100.0000   100.00000
    iid,losses=       15     7.6917     7.69169
- step,time,best_iid,best_loss,vars=      3      2.2    15   7.6917  3.498  0.762
-   iid,losses=       21     8.3419     8.34194
+ step,time,best_iid,best_loss,vars=      3      1.5    15   7.6917  3.498  0.762
+   iid,losses=       20     5.0893     5.08934
    iid,losses=       23   100.0000   100.00000
    iid,losses=       22    16.0612    16.06124
-   iid,losses=       20     5.0893     5.08934
+   iid,losses=       21     8.3419     8.34194
    iid,losses=       24    47.3422    47.34218
- step,time,best_iid,best_loss,vars=      4      2.4    20   5.0893  2.940  0.709
-   iid,losses=       27    26.6916    26.69158
-   iid,losses=       29   100.0000   100.00000
-   iid,losses=       25     2.1608     2.16081
+ step,time,best_iid,best_loss,vars=      4      1.7    20   5.0893  2.940  0.709
    iid,losses=       28    47.2362    47.23621
    iid,losses=       26     6.8225     6.82252
- step,time,best_iid,best_loss,vars=      5      2.5    25   2.1608  2.098  0.581
-   iid,losses=       34    89.8412    89.84115
+   iid,losses=       25     2.1608     2.16081
+   iid,losses=       27    26.6916    26.69158
+   iid,losses=       29   100.0000   100.00000
+ step,time,best_iid,best_loss,vars=      5      1.8    25   2.1608  2.098  0.581
    iid,losses=       32     7.3027     7.30267
+   iid,losses=       34    89.8412    89.84115
+   iid,losses=       31     5.2234     5.22335
    iid,losses=       33   100.0000   100.00000
    iid,losses=       30     3.0388     3.03883
-   iid,losses=       31     5.2234     5.22335
- step,time,best_iid,best_loss,vars=      6      2.7    25   2.1608  2.098  0.581
-   iid,losses=       36     5.8755     5.87550
+ step,time,best_iid,best_loss,vars=      6      1.9    25   2.1608  2.098  0.581
    iid,losses=       38    93.4953    93.49533
+   iid,losses=       35     1.1575     1.15752
+   iid,losses=       36     5.8755     5.87550
    iid,losses=       39   100.0000   100.00000
    iid,losses=       37   100.0000   100.00000
-   iid,losses=       35     1.1575     1.15752
- step,time,best_iid,best_loss,vars=      7      2.8    35   1.1575  1.699  0.477
-   iid,losses=       43   100.0000   100.00000
+ step,time,best_iid,best_loss,vars=      7      2.1    35   1.1575  1.699  0.477
+   iid,losses=       41     1.1491     1.14911
    iid,losses=       42     3.7455     3.74548
    iid,losses=       40     1.2117     1.21167
-   iid,losses=       41     1.1491     1.14911
    iid,losses=       44   100.0000   100.00000
- step,time,best_iid,best_loss,vars=      8      3.0    41   1.1491  2.066  0.116
+   iid,losses=       43   100.0000   100.00000
+ step,time,best_iid,best_loss,vars=      8      2.2    41   1.1491  2.066  0.116
    iid,losses=       48   100.0000   100.00000
-   iid,losses=       49    96.9898    96.98983
-   iid,losses=       47     2.1553     2.15528
-   iid,losses=       46     1.2550     1.25498
    iid,losses=       45     1.5406     1.54062
- step,time,best_iid,best_loss,vars=      9      3.1    41   1.1491  2.066  0.116
-   iid,losses=       51     0.5295     0.52945
-   iid,losses=       53   100.0000   100.00000
+   iid,losses=       49    96.9898    96.98983
+   iid,losses=       46     1.2550     1.25498
+   iid,losses=       47     2.1553     2.15528
+ step,time,best_iid,best_loss,vars=      9      2.4    41   1.1491  2.066  0.116
    iid,losses=       54   100.0000   100.00000
-   iid,losses=       50     0.6156     0.61561
+   iid,losses=       53   100.0000   100.00000
    iid,losses=       52     1.1595     1.15953
+   iid,losses=       50     0.6156     0.61561
+   iid,losses=       51     0.5295     0.52945
  Update variable ranges
-  1:   -9.918   10.000
-  2:   -8.800    9.599
- step,time,best_iid,best_loss,vars=     10      3.2    51   0.5295  1.188  0.399
+          a:   -9.918   10.000
+          b:   -8.800    9.599
+ step,time,best_iid,best_loss,vars=     10      3.5    51   0.5295  1.188  0.399
    iid,losses=       59    36.1349    36.13493
+   iid,losses=       58   100.0000   100.00000
+   iid,losses=       56     0.6959     0.69590
    iid,losses=       55     0.5201     0.52006
    iid,losses=       57     2.1117     2.11166
-   iid,losses=       56     0.6959     0.69590
-   iid,losses=       58   100.0000   100.00000
- step,time,best_iid,best_loss,vars=     11      3.4    55   0.5201  1.041  0.408
+ step,time,best_iid,best_loss,vars=     11      3.6    55   0.5201  1.041  0.408
    iid,losses=       60     0.0967     0.09668
-   iid,losses=       63    35.8679    35.86790
-   iid,losses=       64   100.0000   100.00000
    iid,losses=       62     0.1347     0.13470
    iid,losses=       61     0.5120     0.51200
- step,time,best_iid,best_loss,vars=     12      3.5    60   0.0967  0.979  0.150
-   iid,losses=       67     0.7798     0.77979
-   iid,losses=       68   100.0000   100.00000
-   iid,losses=       65     0.1065     0.10652
+   iid,losses=       64   100.0000   100.00000
+   iid,losses=       63    35.8679    35.86790
+ step,time,best_iid,best_loss,vars=     12      3.8    60   0.0967  0.979  0.150
    iid,losses=       66     0.1137     0.11374
+   iid,losses=       65     0.1065     0.10652
    iid,losses=       69   100.0000   100.00000
- step,time,best_iid,best_loss,vars=     13      3.7    60   0.0967  0.979  0.150
-   iid,losses=       74    25.6403    25.64029
+   iid,losses=       68   100.0000   100.00000
+   iid,losses=       67     0.7798     0.77979
+ step,time,best_iid,best_loss,vars=     13      3.9    60   0.0967  0.979  0.150
+   iid,losses=       71     0.0624     0.06243
    iid,losses=       73   100.0000   100.00000
    iid,losses=       72     0.2962     0.29622
-   iid,losses=       71     0.0624     0.06243
    iid,losses=       70     0.1182     0.11816
- step,time,best_iid,best_loss,vars=     14      3.8    71   0.0624  0.873  0.078
+   iid,losses=       74    25.6403    25.64029
+ step,time,best_iid,best_loss,vars=     14      4.0    71   0.0624  0.873  0.078
+   iid,losses=       76     0.2355     0.23546
+   iid,losses=       78    31.6175    31.61746
+   iid,losses=       77     0.3266     0.32664
    iid,losses=       79   100.0000   100.00000
    iid,losses=       75     0.0727     0.07271
-   iid,losses=       78    31.6175    31.61746
-   iid,losses=       76     0.2355     0.23546
-   iid,losses=       77     0.3266     0.32664
- step,time,best_iid,best_loss,vars=     15      3.9    71   0.0624  0.873  0.078
-   iid,losses=       84    75.2172    75.21723
+ step,time,best_iid,best_loss,vars=     15      4.2    71   0.0624  0.873  0.078
+   iid,losses=       81     0.2602     0.26023
    iid,losses=       82     0.0647     0.06468
    iid,losses=       83   100.0000   100.00000
+   iid,losses=       84    75.2172    75.21723
    iid,losses=       80     0.0277     0.02766
-   iid,losses=       81     0.2602     0.26023
- step,time,best_iid,best_loss,vars=     16      4.1    80   0.0277  0.938 -0.014
-   iid,losses=       86    23.1577    23.15767
-   iid,losses=       89    28.8334    28.83340
-   iid,losses=       88    74.7273    74.72729
+ step,time,best_iid,best_loss,vars=     16      4.3    80   0.0277  0.938 -0.014
    iid,losses=       85     0.0630     0.06298
    iid,losses=       87     0.6675     0.66752
- step,time,best_iid,best_loss,vars=     17      4.2    80   0.0277  0.938 -0.014
-   iid,losses=       92     0.2874     0.28740
+   iid,losses=       86    23.1577    23.15767
+   iid,losses=       88    74.7273    74.72729
+   iid,losses=       89    28.8334    28.83340
+ step,time,best_iid,best_loss,vars=     17      4.5    80   0.0277  0.938 -0.014
    iid,losses=       91     0.9998     0.99983
-   iid,losses=       94   100.0000   100.00000
+   iid,losses=       92     0.2874     0.28740
    iid,losses=       93    28.6146    28.61460
+   iid,losses=       94   100.0000   100.00000
    iid,losses=       90     1.9762     1.97615
- step,time,best_iid,best_loss,vars=     18      4.3    80   0.0277  0.938 -0.014
-   iid,losses=       99   100.0000   100.00000
+ step,time,best_iid,best_loss,vars=     18      4.6    80   0.0277  0.938 -0.014
    iid,losses=       98   100.0000   100.00000
    iid,losses=       97     0.5678     0.56784
    iid,losses=       95     0.0384     0.03842
+   iid,losses=       99   100.0000   100.00000
    iid,losses=       96     1.1544     1.15436
- step,time,best_iid,best_loss,vars=     19      4.5    80   0.0277  0.938 -0.014
-   iid,losses=      103   100.0000   100.00000
-   iid,losses=      104   100.0000   100.00000
+ step,time,best_iid,best_loss,vars=     19      4.7    80   0.0277  0.938 -0.014
    iid,losses=      101     0.0548     0.05476
-   iid,losses=      102     0.4704     0.47040
    iid,losses=      100   100.0000   100.00000
+   iid,losses=      104   100.0000   100.00000
+   iid,losses=      102     0.4704     0.47040
+   iid,losses=      103   100.0000   100.00000
  Update variable ranges
-  1:   -9.918   10.000
-  2:   -9.627    9.599
- step,time,best_iid,best_loss,vars=     20      4.6    80   0.0277  0.938 -0.014
-   iid,losses=      108   100.0000   100.00000
+          a:   -9.918   10.000
+          b:   -9.627    9.599
+ step,time,best_iid,best_loss,vars=     20      4.9    80   0.0277  0.938 -0.014
    iid,losses=      107     0.0458     0.04578
-   iid,losses=      109   100.0000   100.00000
-   iid,losses=      105     0.3839     0.38394
+   iid,losses=      108   100.0000   100.00000
    iid,losses=      106     0.0339     0.03390
- step,time,best_iid,best_loss,vars=     21      4.8    80   0.0277  0.938 -0.014
-   iid,losses=      112     0.0876     0.08756
+   iid,losses=      105     0.3839     0.38394
+   iid,losses=      109   100.0000   100.00000
+ step,time,best_iid,best_loss,vars=     21      5.0    80   0.0277  0.938 -0.014
    iid,losses=      114   100.0000   100.00000
    iid,losses=      110     1.7165     1.71649
+   iid,losses=      112     0.0876     0.08756
    iid,losses=      111     0.3711     0.37109
    iid,losses=      113   100.0000   100.00000
- step,time,best_iid,best_loss,vars=     22      4.9    80   0.0277  0.938 -0.014
-   iid,losses=      119    96.6316    96.63159
-   iid,losses=      118   100.0000   100.00000
-   iid,losses=      116     0.1582     0.15815
+ step,time,best_iid,best_loss,vars=     22      5.2    80   0.0277  0.938 -0.014
    iid,losses=      117     0.4238     0.42376
+   iid,losses=      116     0.1582     0.15815
    iid,losses=      115     1.9532     1.95325
- step,time,best_iid,best_loss,vars=     23      5.0    80   0.0277  0.938 -0.014
+   iid,losses=      118   100.0000   100.00000
+   iid,losses=      119    96.6316    96.63159
+ step,time,best_iid,best_loss,vars=     23      5.3    80   0.0277  0.938 -0.014
+   iid,losses=      123   100.0000   100.00000
    iid,losses=      122     2.3689     2.36890
    iid,losses=      124    13.6833    13.68326
    iid,losses=      121     0.0404     0.04037
    iid,losses=      120     0.0338     0.03379
-   iid,losses=      123   100.0000   100.00000
- step,time,best_iid,best_loss,vars=     24      5.2    80   0.0277  0.938 -0.014
+ step,time,best_iid,best_loss,vars=     24      5.5    80   0.0277  0.938 -0.014
    iid,losses=      129    16.0920    16.09205
-   iid,losses=      125     0.0286     0.02862
    iid,losses=      128    13.7176    13.71763
-   iid,losses=      126     0.4840     0.48397
    iid,losses=      127     1.1326     1.13256
- step,time,best_iid,best_loss,vars=     25      5.3    80   0.0277  0.938 -0.014
-   iid,losses=      130     0.0260     0.02595
-   iid,losses=      133    16.2609    16.26088
-   iid,losses=      132     0.0309     0.03089
-   iid,losses=      134    22.0272    22.02723
+   iid,losses=      125     0.0286     0.02862
+   iid,losses=      126     0.4840     0.48397
+ step,time,best_iid,best_loss,vars=     25      5.6    80   0.0277  0.938 -0.014
    iid,losses=      131     2.2045     2.20451
- step,time,best_iid,best_loss,vars=     26      5.5   130   0.0260  0.952 -0.012
-   iid,losses=      138    19.8762    19.87616
-   iid,losses=      139    96.7457    96.74574
-   iid,losses=      135     1.6068     1.60681
+   iid,losses=      134    22.0272    22.02723
+   iid,losses=      132     0.0309     0.03089
+   iid,losses=      133    16.2609    16.26088
+   iid,losses=      130     0.0260     0.02595
+ step,time,best_iid,best_loss,vars=     26      5.7   130   0.0260  0.952 -0.012
    iid,losses=      136     1.8028     1.80280
+   iid,losses=      139    96.7457    96.74574
    iid,losses=      137     0.0914     0.09136
- step,time,best_iid,best_loss,vars=     27      5.6   130   0.0260  0.952 -0.012
-   iid,losses=      142     0.3466     0.34656
+   iid,losses=      138    19.8762    19.87616
+   iid,losses=      135     1.6068     1.60681
+ step,time,best_iid,best_loss,vars=     27      5.9   130   0.0260  0.952 -0.012
    iid,losses=      140     0.0431     0.04311
-   iid,losses=      144   100.0000   100.00000
    iid,losses=      141     0.0967     0.09668
+   iid,losses=      144   100.0000   100.00000
+   iid,losses=      142     0.3466     0.34656
    iid,losses=      143    90.1064    90.10644
- step,time,best_iid,best_loss,vars=     28      5.7   130   0.0260  0.952 -0.012
-   iid,losses=      147     0.4838     0.48382
-   iid,losses=      145     0.0945     0.09455
+ step,time,best_iid,best_loss,vars=     28      6.0   130   0.0260  0.952 -0.012
    iid,losses=      146     1.4718     1.47183
+   iid,losses=      145     0.0945     0.09455
    iid,losses=      148   100.0000   100.00000
    iid,losses=      149   100.0000   100.00000
- step,time,best_iid,best_loss,vars=     29      5.9   130   0.0260  0.952 -0.012
+   iid,losses=      147     0.4838     0.48382
+ step,time,best_iid,best_loss,vars=     29      6.2   130   0.0260  0.952 -0.012
    iid,losses=      151     0.2738     0.27378
-   iid,losses=      154   100.0000   100.00000
-   iid,losses=      150     1.0633     1.06328
    iid,losses=      152     0.0673     0.06731
    iid,losses=      153   100.0000   100.00000
+   iid,losses=      150     1.0633     1.06328
+   iid,losses=      154   100.0000   100.00000
  Update variable ranges
-  1:   -3.793    5.698
-  2:   -2.669    2.646
- step,time,best_iid,best_loss,vars=     30      6.0   130   0.0260  0.952 -0.012
+          a:   -3.793    5.698
+          b:   -2.669    2.646
+ step,time,best_iid,best_loss,vars=     30      6.3   130   0.0260  0.952 -0.012
    iid,losses=      157     4.8197     4.81971
-   iid,losses=      155     0.0855     0.08553
-   iid,losses=      158    42.2073    42.20727
    iid,losses=      159    32.9705    32.97051
+   iid,losses=      155     0.0855     0.08553
    iid,losses=      156     0.5611     0.56107
- step,time,best_iid,best_loss,vars=     31      6.1   130   0.0260  0.952 -0.012
+   iid,losses=      158    42.2073    42.20727
+ step,time,best_iid,best_loss,vars=     31      6.4   130   0.0260  0.952 -0.012
+   iid,losses=      160     0.0261     0.02607
+   iid,losses=      162     0.0306     0.03060
    iid,losses=      163    35.7151    35.71515
    iid,losses=      164    23.4511    23.45105
-   iid,losses=      162     0.0306     0.03060
    iid,losses=      161     0.0963     0.09630
-   iid,losses=      160     0.0261     0.02607
- step,time,best_iid,best_loss,vars=     32      6.3   130   0.0260  0.952 -0.012
-   iid,losses=      165     0.3464     0.34639
-   iid,losses=      168    23.7895    23.78954
+ step,time,best_iid,best_loss,vars=     32      6.6   130   0.0260  0.952 -0.012
    iid,losses=      169    26.2458    26.24582
    iid,losses=      167     0.0235     0.02347
+   iid,losses=      165     0.3464     0.34639
+   iid,losses=      168    23.7895    23.78954
    iid,losses=      166     0.1594     0.15936
- step,time,best_iid,best_loss,vars=     33      6.4   167   0.0235  1.027 -0.010
-   iid,losses=      172     2.0685     2.06847
-   iid,losses=      171     0.1133     0.11329
-   iid,losses=      174     2.1695     2.16954
-   iid,losses=      173    25.3184    25.31836
+ step,time,best_iid,best_loss,vars=     33      6.7   167   0.0235  1.027 -0.010
    iid,losses=      170     0.8225     0.82251
- step,time,best_iid,best_loss,vars=     34      6.5   167   0.0235  1.027 -0.010
+   iid,losses=      172     2.0685     2.06847
+   iid,losses=      174     2.1695     2.16954
+   iid,losses=      171     0.1133     0.11329
+   iid,losses=      173    25.3184    25.31836
+ step,time,best_iid,best_loss,vars=     34      6.9   167   0.0235  1.027 -0.010
    iid,losses=      179     6.2255     6.22546
+   iid,losses=      175    20.0577    20.05772
    iid,losses=      177     0.2882     0.28817
    iid,losses=      176     0.0557     0.05569
    iid,losses=      178     2.9023     2.90229
-   iid,losses=      175    20.0577    20.05772
- step,time,best_iid,best_loss,vars=     35      6.7   167   0.0235  1.027 -0.010
-   iid,losses=      180     0.1613     0.16128
+ step,time,best_iid,best_loss,vars=     35      7.0   167   0.0235  1.027 -0.010
    iid,losses=      181     0.0259     0.02592
-   iid,losses=      183     6.2882     6.28816
-   iid,losses=      184     7.1244     7.12440
    iid,losses=      182     0.2173     0.21726
- step,time,best_iid,best_loss,vars=     36      6.8   167   0.0235  1.027 -0.010
+   iid,losses=      184     7.1244     7.12440
+   iid,losses=      180     0.1613     0.16128
+   iid,losses=      183     6.2882     6.28816
+ step,time,best_iid,best_loss,vars=     36      7.1   167   0.0235  1.027 -0.010
    iid,losses=      185     0.2145     0.21450
    iid,losses=      187     0.3736     0.37363
+   iid,losses=      188     8.3606     8.36057
    iid,losses=      186     5.3830     5.38295
    iid,losses=      189     5.1293     5.12933
-   iid,losses=      188     8.3606     8.36057
- step,time,best_iid,best_loss,vars=     37      7.0   167   0.0235  1.027 -0.010
-   iid,losses=      190     0.0735     0.07351
-   iid,losses=      193     1.0329     1.03287
-   iid,losses=      191     0.0490     0.04900
+ step,time,best_iid,best_loss,vars=     37      7.3   167   0.0235  1.027 -0.010
    iid,losses=      194    11.9621    11.96208
+   iid,losses=      191     0.0490     0.04900
    iid,losses=      192     6.6498     6.64982
- step,time,best_iid,best_loss,vars=     38      7.1   167   0.0235  1.027 -0.010
-   iid,losses=      196     1.6443     1.64431
+   iid,losses=      193     1.0329     1.03287
+   iid,losses=      190     0.0735     0.07351
+ step,time,best_iid,best_loss,vars=     38      7.4   167   0.0235  1.027 -0.010
    iid,losses=      195     0.4995     0.49955
    iid,losses=      198    11.2279    11.22791
    iid,losses=      199    14.7695    14.76955
    iid,losses=      197     0.0570     0.05703
- step,time,best_iid,best_loss,vars=     39      7.2   167   0.0235  1.027 -0.010
-   iid,losses=      201     0.1295     0.12948
+   iid,losses=      196     1.6443     1.64431
+ step,time,best_iid,best_loss,vars=     39      7.6   167   0.0235  1.027 -0.010
    iid,losses=      200     0.0522     0.05220
-   iid,losses=      202     1.7487     1.74868
-   iid,losses=      204     4.0712     4.07117
+   iid,losses=      201     0.1295     0.12948
    iid,losses=      203    27.1180    27.11799
+   iid,losses=      204     4.0712     4.07117
+   iid,losses=      202     1.7487     1.74868
  Update variable ranges
-  1:   -0.832    2.886
-  2:   -1.174    1.153
- step,time,best_iid,best_loss,vars=     40      7.4   167   0.0235  1.027 -0.010
-   iid,losses=      206     1.0857     1.08573
+          a:   -0.832    2.886
+          b:   -1.174    1.153
+ step,time,best_iid,best_loss,vars=     40      7.7   167   0.0235  1.027 -0.010
    iid,losses=      207     0.0260     0.02601
    iid,losses=      209     2.8649     2.86489
-   iid,losses=      205     3.8596     3.85962
    iid,losses=      208     1.4327     1.43265
- step,time,best_iid,best_loss,vars=     41      7.5   167   0.0235  1.027 -0.010
+   iid,losses=      205     3.8596     3.85962
+   iid,losses=      206     1.0857     1.08573
+ step,time,best_iid,best_loss,vars=     41      7.9   167   0.0235  1.027 -0.010
+   iid,losses=      214     1.0453     1.04534
+   iid,losses=      212     0.1706     0.17057
    iid,losses=      210     3.8904     3.89035
    iid,losses=      211     3.8921     3.89207
-   iid,losses=      212     0.1706     0.17057
    iid,losses=      213     2.0330     2.03304
-   iid,losses=      214     1.0453     1.04534
- step,time,best_iid,best_loss,vars=     42      7.7   167   0.0235  1.027 -0.010
+ step,time,best_iid,best_loss,vars=     42      8.0   167   0.0235  1.027 -0.010
    iid,losses=      219     0.4508     0.45079
    iid,losses=      218     2.3029     2.30289
-   iid,losses=      216     0.0492     0.04924
    iid,losses=      217     0.0300     0.03002
+   iid,losses=      216     0.0492     0.04924
    iid,losses=      215     0.6606     0.66062
- step,time,best_iid,best_loss,vars=     43      7.8   167   0.0235  1.027 -0.010
-   iid,losses=      222     1.3972     1.39721
+ step,time,best_iid,best_loss,vars=     43      8.2   167   0.0235  1.027 -0.010
    iid,losses=      224     6.5506     6.55059
+   iid,losses=      223     2.7370     2.73696
+   iid,losses=      222     1.3972     1.39721
    iid,losses=      220     2.0333     2.03327
    iid,losses=      221     0.1627     0.16265
-   iid,losses=      223     2.7370     2.73696
- step,time,best_iid,best_loss,vars=     44      7.9   167   0.0235  1.027 -0.010
+ step,time,best_iid,best_loss,vars=     44      8.3   167   0.0235  1.027 -0.010
    iid,losses=      225     0.0282     0.02822
-   iid,losses=      229     1.1490     1.14898
-   iid,losses=      226     0.4237     0.42374
    iid,losses=      227     0.0273     0.02729
    iid,losses=      228     2.7925     2.79255
- step,time,best_iid,best_loss,vars=     45      8.1   167   0.0235  1.027 -0.010
-   iid,losses=      234     1.1791     1.17913
-   iid,losses=      233     1.4388     1.43879
-   iid,losses=      232     0.2130     0.21298
+   iid,losses=      226     0.4237     0.42374
+   iid,losses=      229     1.1490     1.14898
+ step,time,best_iid,best_loss,vars=     45      8.4   167   0.0235  1.027 -0.010
    iid,losses=      231     4.1484     4.14839
+   iid,losses=      234     1.1791     1.17913
    iid,losses=      230     0.2621     0.26206
- step,time,best_iid,best_loss,vars=     46      8.2   167   0.0235  1.027 -0.010
-   iid,losses=      236     4.0931     4.09313
+   iid,losses=      232     0.2130     0.21298
+   iid,losses=      233     1.4388     1.43879
+ step,time,best_iid,best_loss,vars=     46      8.6   167   0.0235  1.027 -0.010
    iid,losses=      237     3.3287     3.32872
    iid,losses=      238     2.1231     2.12312
    iid,losses=      235     0.5967     0.59669
    iid,losses=      239     3.6930     3.69303
- step,time,best_iid,best_loss,vars=     47      8.3   167   0.0235  1.027 -0.010
+   iid,losses=      236     4.0931     4.09313
+ step,time,best_iid,best_loss,vars=     47      8.7   167   0.0235  1.027 -0.010
    iid,losses=      241     0.0752     0.07517
-   iid,losses=      240     0.4673     0.46728
    iid,losses=      244     1.1246     1.12457
    iid,losses=      243     3.1868     3.18681
+   iid,losses=      240     0.4673     0.46728
    iid,losses=      242     0.0838     0.08382
- step,time,best_iid,best_loss,vars=     48      8.5   167   0.0235  1.027 -0.010
-   iid,losses=      247     2.5842     2.58424
+ step,time,best_iid,best_loss,vars=     48      8.8   167   0.0235  1.027 -0.010
+   iid,losses=      246     0.0552     0.05518
    iid,losses=      249     3.7472     3.74721
    iid,losses=      248     1.8055     1.80554
+   iid,losses=      247     2.5842     2.58424
    iid,losses=      245     0.1302     0.13021
-   iid,losses=      246     0.0552     0.05518
- step,time,best_iid,best_loss,vars=     49      8.6   167   0.0235  1.027 -0.010
-   iid,losses=      253     3.6260     3.62595
-   iid,losses=      251     3.8580     3.85797
-   iid,losses=      250     0.3873     0.38729
-   iid,losses=      252     0.0549     0.05493
+ step,time,best_iid,best_loss,vars=     49      9.0   167   0.0235  1.027 -0.010
    iid,losses=      254     3.4487     3.44868
+   iid,losses=      252     0.0549     0.05493
+   iid,losses=      253     3.6260     3.62595
+   iid,losses=      250     0.3873     0.38729
+   iid,losses=      251     3.8580     3.85797
  Update variable ranges
-  1:   -0.014    2.068
-  2:   -0.641    0.620
- step,time,best_iid,best_loss,vars=     50      8.8   167   0.0235  1.027 -0.010
+          a:   -0.014    2.068
+          b:   -0.641    0.620
+ step,time,best_iid,best_loss,vars=     50      9.2   167   0.0235  1.027 -0.010
 
  optzer finished since it exceeds the max interation.
- Elapsed time = 8.8 sec.
+ Elapsed time = 9.2 sec.

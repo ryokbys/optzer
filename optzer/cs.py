@@ -23,65 +23,68 @@ import copy
 from multiprocessing import Process, Pool
 from time import time
 from scipy.special import gamma
+import pandas as pd
 
-from optzer.individual import Individual
+from optzer.individual import Individual, ind_from_db
+from optzer.testfunc import testfunc, write_vars_for_testfunc
+from optzer.io import write_db_optzer, read_db_optzer
 
 __author__ = "RYO KOBAYASHI"
 __version__ = "221227"
 
 _fname_gen = 'out.cs.generations'
 _fname_ind = 'out.cs.individuals'
+_fname_db = 'db.optzer.json'
 
-def testfunc(var, **kwargs):
-    x= var['x']
-    y= var['y']
-    res= x**2 +y**2 +100.0*exp(-x**2 -y**2)*sin(2.0*(x+y))*cos(2*(x-y)) \
-         +80.0*exp(-(x-1)**2 -(y-1)**2)*cos(x+4*y)*sin(2*x-y) \
-         +200.0*sin(x+y)*exp(-(x-3)**2-(y-1)**2)
-    return res
-
-def write_vars_for_testfunc(vs,slims,hlims,
-                            fname='in.vars.optzer',**kwargs):
-    vnames = vs.keys()
-    with open(fname,'w') as f:
-        f.write('  {0:d}\n'.format(len(vnames)))
-        for k in vnames:
-            f.write(' {0:10.3f}'.format(vs[k])
-                    +'  {0:10.3f}  {1:10.3f}'.format(*slims[k])
-                    +'  {0:10.3f}  {1:10.3f}'.format(*hlims[k])
-                    +'  {0:s}\n'.format(k))
-    return None
-
-def update_vrange(slims,hlims,all_indivisuals,ntops=100):
+def update_slims(slims,hlims,history_db,ntops=100):
     """
-    Update variable ranges adaptively using all the individuals information.
+    Update soft limits of variables adaptively using all the individuals
+    information.
     """
-    #...Extract top NTOPS individuals from all
+    #...Extract top NTOPS individuals from the history DB
+    losses = history_db['loss']
     tops = []
-    # print('len(all_indivisuals)=',len(all_indivisuals))
-    for i,ind in enumerate(all_indivisuals):
-        if len(tops) < ntops:  # add the individual
-            # print(' i (< ntops)=',i)
-            for it,t in enumerate(tops):
-                if ind.loss < t.loss:
-                    tops.insert(it,ind)
+    for idx in history_db.index:
+        if len(tops) < ntops:  # just add it
+            for itop,idxtop in enumerate(tops):
+                if losses[idx] < losses[idxtop]:
+                    tops.insert(itop,idx)
                     break
-            if not ind in tops:
-                tops.append(ind)
-        else: # insert the individual and pop out the worst one
-            # print(' i (>=ntops)=',i)
-            for it,t in enumerate(tops):
-                if ind.loss < t.loss:
-                    tops.insert(it,ind)
+            if not idx in tops:
+                tops.append(idx)
+        else: # insert the individual and pop out the worst one in the tops
+            for itop,idxtop in enumerate(tops):
+                if losses[idx] < losses[idxtop]:
+                    tops.insert(itop,idx)
                     break
             if len(tops) > ntops:
                 del tops[ntops:len(tops)]
+                
+    # for i,ind in enumerate(history_db):
+    #     if len(tops) < ntops:  # add the individual
+    #         for it,t in enumerate(tops):
+    #             if ind.loss < t.loss:
+    #                 tops.insert(it,ind)
+    #                 break
+    #         if not ind in tops:
+    #             tops.append(ind)
+    #     else: # insert the individual and pop out the worst one
+    #         for it,t in enumerate(tops):
+    #             if ind.loss < t.loss:
+    #                 tops.insert(it,ind)
+    #                 break
+    #         if len(tops) > ntops:
+    #             del tops[ntops:len(tops)]
 
     #...Get new ranges
     new_slims = {}
     vss = []
-    for i,ind in enumerate(tops):
-        vss.append(ind.vs)
+    for idx in tops:
+        di = history_db.iloc[idx].to_dict()
+        vsi = { k:di[k] for k in slims.keys() }
+        vss.append(vsi)
+    # for i,ind in enumerate(tops):
+    #     vss.append(ind.vs)
     for k in slims.keys():
         vmin =  1e+30
         vmax = -1e+30
@@ -92,8 +95,9 @@ def update_vrange(slims,hlims,all_indivisuals,ntops=100):
         new_slims[k] = [vmin,vmax]
 
     #...Set best variables center in the ranges
-    fbest = tops[0].loss
-    vbest = tops[0].vs
+    fbest = losses[tops[0]]
+    d0 = history_db.iloc[tops[0]].to_dict()
+    vbest = { k:d0[k] for k in slims.keys() }
     for k in slims.keys():
         vmin = new_slims[k][0]
         vmax = new_slims[k][1]
@@ -108,9 +112,9 @@ class CS:
     Cuckoo search class.
     """
 
-    def __init__(self, nind, frac, vnames, vs, slims,
-                 hlims, loss_func, write_func,
-                 nproc=0,seed=42,**kwargs):
+    def __init__(self, nind, frac, vnames, vs0, slims,
+                 hlims, loss_func, write_func=None,
+                 nproc=0, seed=42, **kwargs):
         """
         Conctructor of CS class.
 
@@ -122,8 +126,8 @@ class CS:
             Number of processes used to run N individuals.
         vnames:  list
             Variable names.
-        vs: dict
-            Variables with names.
+        vs0: dict
+            Initial guess of variables.
         slims,hlims: dict
             Set of variables with names.
         """
@@ -135,7 +139,7 @@ class CS:
         self.frac = frac   # Fraction of worse individuals to be abondoned
         self.nproc = nproc
         self.vnames = vnames
-        self.vs = vs
+        self.vs0 = vs0
         self.slims = slims
         self.hlims = hlims
         self.vws = {}
@@ -160,19 +164,54 @@ class CS:
                      gamma((1+self.beta)/2)*self.beta*2.0**((self.beta-1)/2))**self.betai
         self.vsgm = 1.0
 
+        cols = ['iid','loss','gen'] +self.vnames
+        self.history_db = pd.DataFrame(columns=cols)
+        #...Try to restart by loading db.optzer.json if exists
+        if os.path.exists(_fname_db):
+            try:
+                self.history_db = pd.read_json(_fname_db)
+            except Exception as e:
+                print(e)
+                print(f'\n !!! Failed to load {_fname_db} for restart. !!!'
+                      +'\n !!! So start with the given initial guess.     !!!')
+            print(f'\n Restarting with existing DB, {_fname_db}.')
+                
         #...initialize population
         self.population = []
-        self.all_indivisuals = []
-        self.iidinc = 0
-        for i in range(self.nind):
-            self.iidinc += 1
-            ind = Individual(self.iidinc, self.vnames, self.slims,
-                             self.hlims, self.loss_func)
-            if i == 0:
-                ind.set_variable(self.vs)
-            else:
-                ind.init_random()
-            self.population.append(ind)
+        if len(self.history_db) == 0:
+            self.igen0 = 0
+            self.iidinc = 0
+            for i in range(self.nind):
+                self.iidinc += 1
+                ind = Individual(self.iidinc, self.vnames)
+                if i == 0:
+                    ind.set_variables(self.vs0, self.slims)
+                else:
+                    ind.init_random(self.slims)
+                self.population.append(ind)
+        else:  # DB loaded
+            #...Use DB to narrow the soft limits
+            self.slims = update_slims(self.slims,self.hlims,
+                                          self.history_db)
+            print(' Update variable ranges')
+            for k in self.vnames:
+                print(' {0:>15s}:  {1:7.3f}  {2:7.3f}'.format(k,
+                                                              self.slims[k][0],
+                                                              self.slims[k][1]))
+            #...Get best one from the DB
+            bestidx = self.history_db.loss.argmin()
+            self.bestind = ind_from_db(self.history_db,
+                                       bestidx,
+                                       self.vnames, self.slims)
+            #...Generate random population with the updated slims
+            self.iidinc = int(self.history_db.iid.max()) +1
+            self.igen0 = int(self.history_db.gen.max()) +1
+            for i in range(self.nind):
+                ind = Individual(self.iidinc, self.vnames)
+                ind.init_random(self.slims)
+                self.population.append(ind)
+                self.iidinc += 1
+                
 
         #...Evaluate loss function values
         prcs = []
@@ -185,28 +224,36 @@ class CS:
             kwtmp = copy.copy(self.kwargs)
             kwtmp['index'] = ip
             kwtmp['iid'] = ind.iid
-            #prcs.append(pool.apply_async(pi.calc_loss_func, (kwtmp,qs[ip])))
-            prcs.append(pool.apply_async(ind.calc_loss_func, (kwtmp,)))
+            prcs.append(pool.apply_async(ind.calc, (self.loss_func,kwtmp,)))
         results = [ res.get() for res in prcs ]
         for res in results:
             loss,ip = res
             self.population[ip].loss = loss
+            self.population[ip].gen = self.igen0
 
         pool.close()
         
         self.keep_best()
-        self.all_indivisuals.extend(self.population)
-        if self.print_level > 2:
-            for ind in self.population:
-                fname = 'in.vars.optzer.{0:d}'.format(ind.iid)
-                self.write_variables(ind,
-                                     fname=fname,
-                                     **self.kwargs)
-        else:
-            fname = 'in.vars.optzer.{0:d}'.format(self.bestind.iid)
-            self.write_variables(self.bestind,
-                                 fname=fname,
-                                 **self.kwargs)
+        #...Create history DB if not exists
+        pop2dfs = [ pi.to_DataFrame() for pi in self.population ]
+        self.history_db = pd.concat([self.history_db] +pop2dfs,
+                                    ignore_index=True)
+            
+        # if self.print_level > 2:
+        #     for ind in self.population:
+        #         fname = 'in.vars.optzer.{0:d}'.format(ind.iid)
+        #         self.write_variables(ind,
+        #                              fname=fname,
+        #                              **self.kwargs)
+        # else:
+        #     fname = 'in.vars.optzer.{0:d}'.format(self.bestind.iid)
+        #     self.write_variables(self.bestind,
+        #                          fname=fname,
+        #                          **self.kwargs)
+
+        #...Once the history is updated, dump it to the file
+        write_db_optzer(self.history_db,fname=_fname_db)
+        return None
 
     def keep_best(self):
         losses = []
@@ -245,29 +292,14 @@ class CS:
             start = self.kwargs['start']
         else:
             start = time()
-        fgen = open(_fname_gen,'w')
-        find = open(_fname_ind,'w')
-        #...Headers
-        fgen.write('# {0:>4s}  {1:>8s}  {2:12s}\n'.format('gen','iid','loss'))
-        find.write('# {0:>7s}  {1:>12s}'.format('iid', 'loss'))
-        for i in range(len(self.population[0].vs)):
-            find.write(' {0:>8d}-th'.format(i+1))
-        find.write('\n')
-        
-        for i,ind in enumerate(self.population):
-            fgen.write('     0  {0:8d}  {1:12.4e}\n'.format(ind.iid, ind.loss))
-            find.write(' {0:8d}  {1:12.4e}'.format(ind.iid, ind.loss))
-            for k in self.vnames:
-                find.write(' {0:11.4e}'.format(ind.vs[k]))
-            # for j,vj in enumerate(ind.vs):
-            #     find.write(' {0:11.4e}'.format(vj))
-            find.write('\n')
 
         if self.print_level > 0:
             print(' step,time,best_iid,best_loss,vars='
-                  +' {0:6d} {1:8.1f} {2:5d} {3:8.4f}'.format(0,time()-start,
+                  +' {0:6d} {1:8.1f} {2:5d} {3:8.4f}'.format(self.igen0,
+                                                             time()-start,
                                                              self.bestind.iid,
-                                                             self.bestind.loss),end="")
+                                                             self.bestind.loss),
+                  end="")
             inc = 0
             for k in self.vnames:
                 if inc < 16:
@@ -284,7 +316,7 @@ class CS:
         else:
             pool = Pool()
             
-        for it in range(max_gen):
+        for igen in range(self.igen0, self.igen0+max_gen):
             self.sort_individuals()
             #...Create candidates from current population using Levy flight
             candidates = []
@@ -307,9 +339,8 @@ class CS:
                 #...create new individual for trial
                 # print('ip,vi,vnew=',ip,vi,vnew)
                 self.iidinc += 1
-                newind = Individual(self.iidinc, self.vnames, self.slims,
-                                    self.hlims, self.loss_func)
-                newind.set_variable(vnew)
+                newind = Individual(self.iidinc, self.vnames)
+                newind.set_variables(vnew, self.slims)
                 candidates.append(newind)
 
             #...Create new completely random candidates
@@ -317,9 +348,8 @@ class CS:
             rnd_candidates = []
             for iv in range(iab,self.nind):
                 self.iidinc += 1
-                newind = Individual(self.iidinc, self.vnames, self.slims,
-                                    self.hlims, self.loss_func)
-                newind.init_random()
+                newind = Individual(self.iidinc, self.vnames)
+                newind.init_random(self.slims)
                 rnd_candidates.append(newind)
 
             #...Evaluate loss function values of updated candidates and new random ones
@@ -328,15 +358,13 @@ class CS:
                 kwtmp = copy.copy(self.kwargs)
                 kwtmp['index'] = ic
                 kwtmp['iid'] = ci.iid
-                # prcs.append(Process(target=ci.calc_loss_func, args=(kwtmp,qs[ic])))
-                prcs.append(pool.apply_async(ci.calc_loss_func, (kwtmp,)))
+                prcs.append(pool.apply_async(ci.calc, (self.loss_func,kwtmp,)))
             rnd_prcs = []
             for ic,ci in enumerate(rnd_candidates):
                 kwtmp = copy.copy(self.kwargs)
                 kwtmp['index'] = len(candidates) +ic
                 kwtmp['iid'] = ci.iid
-                # prcs.append(Process(target=ci.calc_loss_func, args=(kwtmp,qs[ic])))
-                rnd_prcs.append(pool.apply_async(ci.calc_loss_func, (kwtmp,)))
+                rnd_prcs.append(pool.apply_async(ci.calc, (self.loss_func,kwtmp,)))
             
             results = [ res.get() for res in prcs ]
             rnd_results = [ res.get() for res in rnd_prcs ]
@@ -344,13 +372,21 @@ class CS:
             for res in results:
                 loss,ic = res
                 candidates[ic].loss = loss
-            self.all_indivisuals.extend(candidates)
+                candidates[ic].gen = igen+1
+            db_add = [ c.to_DataFrame() for c in candidates ] 
 
             for res in rnd_results:
                 loss,ic_rnd = res
                 ic = ic_rnd -len(candidates)
                 rnd_candidates[ic].loss = loss
-            self.all_indivisuals.extend(rnd_candidates)
+                rnd_candidates[ic].gen = igen+1
+            db_add.extend([ c.to_DataFrame() for c in rnd_candidates ])
+            self.history_db = pd.concat([self.history_db] +db_add)
+            self.history_db.drop_duplicates(subset='iid',
+                                            inplace=True,
+                                            ignore_index=True)
+            #...Dump the DB once it is updated.
+            write_db_optzer(self.history_db,fname=_fname_db)
 
             #...Pick j that is to be compared with i
             js = random.sample(range(self.nind),k=self.nind)
@@ -361,12 +397,6 @@ class CS:
                 dloss = cj.loss -pj.loss
                 if dloss < 0.0:  # replace with new individual
                     self.population[jv] = cj
-                    find.write(' {0:8d}  {1:12.4e}'.format(cj.iid, cj.loss))
-                    # for k,vk in enumerate(cj.vs):
-                    for k in self.vnames:
-                        find.write(' {0:11.4e}'.format(cj.vs[k]))
-                    find.write('\n')
-                    find.flush()
                 else:
                     pass
 
@@ -387,26 +417,21 @@ class CS:
                     self.bestind = ci
                     best_updated = True
             if best_updated:
-                fname = 'in.vars.optzer.{0:d}'.format(self.bestind.iid)
                 self.write_variables(self.bestind,
-                                     fname=fname,
+                                     fname='in.vars.optzer.best',
                                      **self.kwargs)
-                os.system('cp -f {0:s} in.vars.optzer.best'.format(fname))
 
             #...Update variable ranges if needed
-            if self.update_slims_per > 0 and (it+1) % self.update_slims_per == 0:
-                self.slims = update_vrange(self.slims,self.hlims,self.all_indivisuals)
+            if self.update_slims_per > 0 and (igen+1) % self.update_slims_per == 0:
+                self.slims = update_slims(self.slims,self.hlims,
+                                          self.history_db)
                 print(' Update variable ranges')
-                # for i in range(len(self.slims)):
                 for k in self.vnames:
                     print(' {0:>10s}:  {1:7.3f}  {2:7.3f}'.format(k,self.slims[k][0],self.slims[k][1]))
-                #...Set variable ranges of all individuals in the population
-                for iv in range(len(self.population)):
-                    self.population[iv].slims = self.slims
             
             if self.print_level > 0:
                 print(' step,time,best_iid,best_loss,vars='
-                      +' {0:6d} {1:8.1f} {2:5d} {3:8.4f}'.format(it+1,time()-start,
+                      +' {0:6d} {1:8.1f} {2:5d} {3:8.4f}'.format(igen+1,time()-start,
                                                                  self.bestind.iid,
                                                                  self.bestind.loss),end="")
 
@@ -419,22 +444,17 @@ class CS:
                     inc += 1
                 print('', flush=True)
 
-            for i,ind in enumerate(self.population):
-                fgen.write(' {0:5d}  {1:8d}  {2:12.4e}\n'.format(it+1,
-                                                                 ind.iid,
-                                                                 ind.loss))
-                fgen.flush()
-        fgen.close()
-        find.close()
         pool.close()
         #...Finaly write out the best one
-        self.write_variables(self.bestind,fname='in.vars.optzer.best',
+        self.write_variables(self.bestind,
+                             fname='in.vars.optzer.best',
                              **self.kwargs)
         return None
 
     def write_variables(self,ind,fname='in.vars.optzer',**kwargs):
-        self.write_func(ind.vnames, ind.vs, ind.slims, ind.hlims,
-                        fname, **kwargs)
+        if self.write_func != None:
+            self.write_func(ind.vnames, ind.vs, self.slims, self.hlims,
+                            fname, **kwargs)
         return None
 
 def main():

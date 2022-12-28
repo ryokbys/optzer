@@ -1,9 +1,9 @@
 terms   screened_cut
 charges   fixed_bvs
-  Li    1.0   {0:6.4f}   1
-  Zr    4.0   {1:6.4f}   1
-  P     5.0   {2:6.4f}   1
-  O    -2.0   {3:6.4f}   1
+  Li    1.0   {rho_Li:6.4f}   1
+  Zr    4.0   {rho_Zr:6.4f}   1
+  P     5.0   {rho_P:6.4f}   1
+  O    -2.0   {rho_O:6.4f}   1
 
 fbvs     1.00
 

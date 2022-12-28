@@ -1,11 +1,14 @@
-.phony: clean veryclean run test
+.phony: clean veryclean run test init
 SHELL = /bin/bash
 
 clean:
 	rm -f in.vars.optzer.[1-9]* *~
 
 veryclean: clean
-	rm -rf out.optzer out.cs.* subdir_*
+	rm -rf out.cs.* subdir_*
+
+init: veryclean
+	rm -rf db.optzer.json out.optzer in.vars.optzer.best
 
 run:
 	optzer --nproc 5 --random-seed 42 2>&1 | tee out.optzer
