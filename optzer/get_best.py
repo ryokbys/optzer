@@ -7,19 +7,20 @@ Usage:
 
 Options:
   -h, --help  Show this message and exit.
-  -o,--out-file OUTFILE
-              Specify output file name. [default: out.optzer]
   --bestdir-name BESTDIR
               Best data dir name. [default: best_data]
 """
 import os,sys
 import shutil
 from docopt import docopt
+import pandas as pd
 
-from .io import read_out_optzer
+# from optzer.io import read_out_optzer
 
 __author__ = "RYO KOBAYASHI"
-__version__ = "122224"
+__version__ = "221227"
+
+_fname_db = 'db.optzer.json'
 
 def read_output(fname='out.optzer'):
     """Read output from optzer and return some information."""
@@ -35,10 +36,11 @@ def read_output(fname='out.optzer'):
 
 def main():
     args = docopt(__doc__.format(os.path.basename(sys.argv[0])))
-    ofname = args['--out-file']
     bestdname = args['--bestdir-name']
 
-    bestiid,_,_,_ = read_out_optzer(ofname)
+    db = pd.read_json(_fname_db)
+    bestidx = db.loss.argmin()
+    bestiid = db.iid[bestidx]
 
     if os.path.exists(bestdname):
         shutil.rmtree(bestdname)
