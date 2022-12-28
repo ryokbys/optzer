@@ -129,6 +129,7 @@ def vars2params(vs,**kwargs):
             f.write(new_contents)
     return None
 
+
 def main():
     import os,sys
     args = docopt(__doc__.format(os.path.basename(sys.argv[0])))
@@ -139,17 +140,25 @@ def main():
     kwargs = {}
     kwargs['param_files'] = pfiles
     
-    vs,vrs,vrsh,options,vopts = read_vars_optzer(vfile)
+    # vs,vrs,vrsh,options,vopts = read_vars_optzer(vfile)
+    vnames,vs,slims,hlims,options = read_vars_optzer(vfile)
 
-    for pfile in pfiles:
-        with open(pfile,'r') as f:
-            kwargs[pfile] = f.read()
-        os.system(f'cp -f {pfile} {pfile}.bak')
-    vars2params(vs, **kwargs)
+    # for pfile in pfiles:
+    #     with open(pfile,'r') as f:
+    #         kwargs[pfile] = f.read()
+    #     os.system(f'cp -f {pfile} {pfile}.bak')
+    # vars2params(vs, **kwargs)
     print(' Convert the following files by replacing with optimized parameters:')
     for pfile in pfiles:
         newpfile = os.path.basename(pfile)
+        if os.path.exists(newpfile):
+            Exception(f'{newpfile} already exists and cannot overwrite it!')
         print(f'   - {pfile} ==> {newpfile}')
+        with open(pfile,'r') as f:
+            fcontent = f.read()
+        newfcontent = fcontent.format(**vs)
+        with open(newpfile,'w') as f:
+            f.write(newfcontent)
     print('')
     return None
 

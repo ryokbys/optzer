@@ -1,8 +1,9 @@
 import os
 import numpy as np
+import pandas as pd
 
 __author__ = "RYO KOBAYASHI"
-__version__ = "221226"
+__version__ = "221227"
 
 def read_in_optzer(fname='in.optzer'):
     #...initialize
@@ -58,25 +59,9 @@ def read_in_optzer(fname='in.optzer'):
             for i in range(1,len(data)):
                 infp['target'].append(data[i])
             mode = None
-        elif data[0] == 'de_num_individuals':
+        elif data[0] == 'num_individuals' or data[0] == 'num_trials':
             nind = int(data[1])
-            infp['de_num_individuals'] = nind
-            mode = None
-        elif data[0] == 'de_crossover_rate':
-            cr = float(data[1])
-            infp['de_crossover_rate'] = cr
-            mode = None
-        elif data[0] == 'de_fraction':
-            frac = float(data[1])
-            infp['de_fraction'] = frac
-            mode = None
-        elif data[0] == 'de_temperature':
-            temp = float(data[1])
-            infp['de_temperature'] = temp
-            mode = None
-        elif data[0] == 'cs_num_individuals':
-            nind = int(data[1])
-            infp['cs_num_individuals'] = nind
+            infp['num_individuals'] = nind
             mode = None
         elif data[0] == 'cs_fraction':
             frac = float(data[1])
@@ -161,57 +146,67 @@ def write_info(infp,args):
 
     fmethod = infp['opt_method']
     print('   opt_method  {0:s}'.format(fmethod))
-    if fmethod in ('de','DE'):
-        print('   num_individuals   ',infp['de_num_individuals'])
-        print('   fraction          {0:7.4f}'.format(infp['de_fraction']))
-        print('   temparature       {0:7.4f}'.format(infp['de_temperature']))
-        print('   crossover_rate    {0:7.4f}'.format(infp['de_crossover_rate']))
-    elif fmethod in ('cs','CS'):
-        print('   num_individuals   ',infp['cs_num_individuals'])
+    if fmethod in ('cs','CS'):
+        print('   num_individuals   {0:d}'.format(infp['num_individuals']))
         print('   fraction          {0:7.4f}'.format(infp['cs_fraction']))
     elif fmethod in ('tpe','TPE','wpe','WPE'):
         pass
     else:
-        print('   There is no such fitting method...')
+        print('   There is no such opt_method...')
     print('   num_iteration   {0:d}'.format(infp['num_iteration']))
     print('   missing_value   {0:.1f}'.format(infp['missing_value']))
     print(' ----------')
     return None
 
-def write_vars_optzer(vs,vrs,fname='in.vars.optzer',**kwargs):
-    options = kwargs['options']
-    hardlim = kwargs['hardlim']
-    vopts = kwargs['vopts']
+def write_vars_optzer(vnames,vs,slims,hlims,fname='in.vars.optzer',**kwargs):
+    """Write in.vars.optzer.
+    
+    Each line (except 1st line) has the following values.
+      1: initial guess of the parameter
+      2: soft lower limit
+      3: soft upper limit
+      4: hard lower limit
+      5: hard upper limit
+      6: name of the parameter
+    """
+    voptions = kwargs['voptions']
     nv = len(vs)
     with open(fname,'w') as f:
-        if 'hard-limit' in options.keys() and options['hard-limit']:
-            f.write('!  hard-limit:  T\n')
-            f.write('!\n')
         f.write(' {0:5d} \n'.format(nv))
-        for i in range(len(vs)):
-            f.write(' {0:15.7f}  {1:15.7f}  {2:15.7f}'.format(vs[i],*vrs[i])
-                    +'  {0:10.4f}  {1:10.4f}'.format(*hardlim[i]))
-            if len(vopts[i]) > 0:
-                for ivo,vo in enumerate(vopts[i]):
-                    f.write(f'  {vo}')
-            f.write('\n')
+        # for i in range(len(vs)):
+        for k in vnames:
+            f.write(' {0:15.7f}  {1:15.7f}  {2:15.7f}'.format(vs[k],*slims[k])
+                    +'  {0:10.4f}  {1:10.4f}'.format(*hlims[k])
+                    +f'  {k}\n')
     return None
 
 def read_vars_optzer(fname='in.vars.optzer'):
+    """Read in.vars.optzer.
+    
+    Each line (except 1st line) should have the following values.
+      1: initial guess of the parameter
+      2: soft lower limit
+      3: soft upper limit
+      4: hard lower limit
+      5: hard upper limit
+      6: name of the parameter
+
+    The name of the parameter is required since version 221227.
+    """
     with open(fname,'r') as f:
         lines = f.readlines()
     iv = 0
     nv = -1
-    vs = []
-    vrs = []
-    vrsh = []
-    vopts = []
-    options = {}
+    vs = {}
+    slims = {}
+    hlims = {}
+    vnames = []
+    voptions = {}
     for line in lines:
         if line[0] in ('!','#'):
             k,v = parse_option(line)
             if k is not None:
-                options[k] = v[0]
+                voptions[k] = v[0]
                 #print(' option: ',k,v)
             continue
         data = line.split()
@@ -224,17 +219,21 @@ def read_vars_optzer(fname='in.vars.optzer'):
             iv += 1
             if iv > nv:
                 break
-            vs.append(float(data[0]))
-            vrs.append([ float(data[1]), float(data[2])])
-            vrsh.append([float(data[3]), float(data[4])])
-            vopts.append(data[5:])
-            # print(' iv,vrhmin,vrhmax= {0:3d} {1:11.3e} {2:11.3e}'.format(iv,
-            #                                                              float(data[3]),
-            #                                                              float(data[4])))
-    vs = np.array(vs)
-    vrs = np.array(vrs)
-    vrsh = np.array(vrsh)
-    return vs,vrs,vrsh,options,vopts
+            vname = data[5]
+            if vname in vnames:
+                ValueError('Parameter name should be unique: '+vname)
+            vnames.append(vname)
+            vs[vname] = float(data[0])
+            slims[vname] = [ float(data[1]), float(data[2]) ]
+            hlims[vname] = [ float(data[3]), float(data[4]) ]
+            # vs.append(float(data[0]))
+            # vrs.append([ float(data[1]), float(data[2])])
+            # vrsh.append([float(data[3]), float(data[4])])
+
+    # vs = np.array(vs)
+    # vrs = np.array(vrs)
+    # vrsh = np.array(vrsh)
+    return vnames,vs,slims,hlims,voptions
     
 
 def read_data(fname,):

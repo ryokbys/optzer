@@ -34,12 +34,11 @@ import subprocess
 import time
 from datetime import datetime
 
-from .opt2prms import vars2params
-from .io import read_in_optzer, write_info, write_vars_optzer, read_vars_optzer, \
-    read_data
-from .de import DE
-from .cs import CS
-from .tpe import TPE
+from optzer.opt2prms import vars2params
+from optzer.io import read_in_optzer, write_info, write_vars_optzer, \
+    read_vars_optzer, read_data
+from optzer.cs import CS
+from optzer.tpe import TPE
 
 __author__ = "RYO KOBAYASHI"
 __version__ = "0.1.2"
@@ -71,7 +70,7 @@ def get_data(basedir,prefix=None,**kwargs):
             data[t] = None
             pass
         if prefix == 'ref':
-            print('   {0:s}  {1:.3f}'.format(t,data[t]['wdat']))
+            print('  {0:>15s}  {1:.3f}'.format(t,data[t]['wdat']))
     return data
 
 def loss_func(tdata,eps=1.0e-8,**kwargs):
@@ -177,7 +176,11 @@ def func_wrapper(variables, **kwargs):
         for pfile in kwargs['param_files']:
             if os.path.exists(pfile):
                 os.remove(pfile)
-        vars2params(varsfp['variables'], **kwargs)
+            fcontent = kwargs[pfile]  # kwargs has pfile content
+            newfcontent = fcontent.format(**variables)
+            with open(pfile,'w') as f:
+                f.write(newfcontent)
+        #vars2params(varsfp['variables'], **kwargs)
 
     #...Do sub-jobs in the subdir_###
     L_up_lim = kwargs['fval_upper_limit']
@@ -190,15 +193,7 @@ def func_wrapper(variables, **kwargs):
         subprocess.run(cmd,shell=True,check=True,timeout=timeout)
         optdata = get_data('.',**kwargs)
         L = loss_func(optdata,**kwargs)
-    except Exception as e:
-        if print_level > 0:
-            print('  Since subjobs failed at {0:s}, '.format(subdir)
-                  +'the upper limit value is applied to its loss function.',
-                  flush=True)
-        os.chdir(cwd)
-        L = L_up_lim
 
-    try:
         #...Store data in iid_### directories
         os.mkdir("iid_{0:d}".format(kwargs['iid']))
         txt = ''
@@ -215,9 +210,12 @@ def func_wrapper(variables, **kwargs):
         os.chdir(cwd)
     except Exception as e:
         if print_level > 0:
-            print(' Something wrong with storing data in iid_{0:d}'.format(kwargs['iid']))
-            print(e)
-        
+            print('  Since subjobs failed at {0:s}, '.format(subdir)
+                  +'the upper limit value is applied to its loss function.',
+                  flush=True)
+        os.chdir(cwd)
+        L = L_up_lim
+
         
     return L
     
@@ -238,21 +236,22 @@ def main():
     infp = read_in_optzer(_infname)
     write_info(infp,args)
 
-    vs,vrs,vrsh,options,vopts = read_vars_optzer(infp['vars_file'])
+    vnames,vs,slims,hlims,voptions = read_vars_optzer(infp['vars_file'])
+    # vs,vrs,vrsh,options,vopts = read_vars_optzer(infp['vars_file'])
     print('\n Initial variable ranges')
-    for i in range(len(vrs)):
-        print(' {0:2d}:  {1:7.3f}  {2:7.3f}'.format(i+1,vrs[i,0],vrs[i,1]))
+    for vname in vnames:
+        sl = slims[vname]
+        print(' {0:>10s}:  {1:7.3f}  {2:7.3f}'.format(vname,sl[0],sl[1]))
 
     kwargs = infp
-    kwargs['options'] = options
-    kwargs['hardlim'] = vrsh
-    # kwargs['infp'] = infp
+    kwargs['voptions'] = voptions
+    # kwargs['hlims'] = hlims
+    # kwargs['vnames'] = vnames
     kwargs['subdir-prefix'] = args['--subdir-prefix']
     kwargs['subjob-script'] = args['--subjob-script']
     kwargs['subjob-prefix'] = args['--subjob-prefix']
     kwargs['subjob-timeout'] = int(args['--subjob-timeout'])
     kwargs['start'] = start
-    kwargs['vopts'] = vopts
     
     if len(kwargs['target']) != 0:
         refdata = get_data('.',prefix='ref',**kwargs)
@@ -274,22 +273,15 @@ def main():
     print('      total')
 
     maxiter = kwargs['num_iteration']
-    if kwargs['opt_method'] in ('de','DE'):
-        N = infp['de_num_individuals']
-        F = infp['de_fraction']
-        T = infp['de_temperature']
-        CR = infp['de_crossover_rate']
-        opt = DE(N,F,CR,T, vs,vrs,vrsh, func_wrapper, write_vars_optzer,
-                 nproc=nproc, seed=seed, **kwargs)
-    elif kwargs['opt_method'] in ('cs','CS','cuckoo','Cuckoo'):
-        N = infp['cs_num_individuals']
-        F = infp['cs_fraction']
-        opt = CS(N,F, vs,vrs,vrsh, func_wrapper, write_vars_optzer,
-                 nproc=nproc, seed=seed, **kwargs)
+    if kwargs['opt_method'] in ('cs','CS','cuckoo','Cuckoo'):
+        nind = infp['num_individuals']
+        frac = infp['cs_fraction']
+        opt = CS(nind, frac, vnames, vs, slims, hlims, func_wrapper,
+                 write_vars_optzer, nproc=nproc, seed=seed, **kwargs)
     elif kwargs['opt_method'] in ('tpe','TPE','wpe','WPE'):
         nbatch = nproc
-        opt = TPE(nbatch, vs, vrs, vrsh, func_wrapper, write_vars_optzer,
-                  seed=seed, **kwargs)
+        opt = TPE(nbatch, vnames, vs, slims, hlims, func_wrapper,
+                   write_vars_optzer, seed=seed, **kwargs)
     
     opt.run(maxiter)
 
