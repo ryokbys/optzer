@@ -45,6 +45,73 @@ __version__ = "221227"
 
 _infname = 'in.optzer'
 
+class Optzer:
+    """Optimization class."""
+
+    def __init__(self, nproc=1, seed=42, vnames=[]):
+        self.nproc = nproc
+        self.seed = seed
+        self.vnames = vnames
+        return None
+
+    def set_variables(self, variables, slims=None, hlims=None):
+        """Set variables, soft limits, and hard limits.
+
+        variables: dict
+          Dictionary of a set of variables.
+        slims, hlims: dict
+          Soft/hard limit of variables.
+        """
+        if type(variables) != dict:
+            raise TypeError('variables should be a dict (key-value pairs).')
+        vnames = variables.keys()
+        if len(self.vnames) == 0:
+            self.vnames = vnames
+        elif set(self.vnames) != set(vnames):
+            raise ValueError('variables are not consistent with original vnames.')
+        self.vs = variables
+        if slims == None and hlims == None:
+            #...Since no limit is set, set sufficiently large value
+            self.slims = {}
+            self.hlims = {}
+            for k in vnames:
+                self.slims[k] = [-1e+10, 1e+10]
+                self.hlims[k] = [-1e+10, 1e+10]
+        elif slims == None:
+            self.hlims = hlims
+            self.slims = hlims
+        elif hlims == None:
+            self.slims = slims
+            self.hlims = slims
+        else:
+            self.slims = slims
+            self.hlims = hlims
+        return None
+
+    def optimize(self, loss_func, num_iteration=0, **kwargs):
+        """Perform optimization of the given loss function.
+
+        loss_func: callback function
+          Function that computes loss value using variables as input parameters
+        num_iteration: int
+          Num of iteration in optimization.
+        """
+        if kwargs['opt_method'] in ('cs','CS','cuckoo','Cuckoo'):
+            nind = kwargs['num_individuals']
+            frac = kwargs['cs_fraction']
+            opt = CS(nind, frac, self.vnames, self.vs, self.slims,
+                     self.hlims, loss_func, write_vars_optzer, 
+                     nproc=self.nproc, seed=self.seed, **kwargs)
+        elif kwargs['opt_method'] in ('tpe','TPE','wpe','WPE'):
+            opt = TPE(self.nproc, self.vnames, self.vs,
+                      self.slims, self.hlims, loss_func,
+                      write_vars_optzer, seed=self.seed, **kwargs)
+        
+        opt.run(num_iteration)
+        return None
+
+    
+
 def get_data(basedir,prefix=None,**kwargs):
     """
     New implementation of get_data, which loads data to be used to fit parameters.
@@ -266,6 +333,9 @@ def main():
             with open(fname,'r') as f:
                 kwargs[fname] = f.read()
 
+    opt = Optzer(nproc=nproc, seed=seed, vnames = vnames)
+    opt.set_variables(vs, slims=slims, hlims=hlims)
+
     print('\n # iid,losses=      iid',end='')
     if len(kwargs['target']) > 0:
         for t in kwargs['target']:
@@ -273,16 +343,18 @@ def main():
     print('      total')
 
     maxiter = kwargs['num_iteration']
-    if kwargs['opt_method'] in ('cs','CS','cuckoo','Cuckoo'):
-        nind = infp['num_individuals']
-        frac = infp['cs_fraction']
-        opt = CS(nind, frac, vnames, vs, slims, hlims, func_wrapper,
-                 write_vars_optzer, nproc=nproc, seed=seed, **kwargs)
-    elif kwargs['opt_method'] in ('tpe','TPE','wpe','WPE'):
-        opt = TPE(nproc, vnames, vs, slims, hlims, func_wrapper,
-                  write_vars_optzer, seed=seed, **kwargs)
-    
-    opt.run(maxiter)
+    opt.optimize(func_wrapper, **kwargs)
+
+    # maxiter = kwargs['num_iteration']
+    # if kwargs['opt_method'] in ('cs','CS','cuckoo','Cuckoo'):
+    #     nind = infp['num_individuals']
+    #     frac = infp['cs_fraction']
+    #     opt = CS(nind, frac, vnames, vs, slims, hlims, func_wrapper,
+    #              write_vars_optzer, nproc=nproc, seed=seed, **kwargs)
+    # elif kwargs['opt_method'] in ('tpe','TPE','wpe','WPE'):
+    #     opt = TPE(nproc, vnames, vs, slims, hlims, func_wrapper,
+    #               write_vars_optzer, seed=seed, **kwargs)
+    # opt.run(maxiter)
 
     print('\n optzer finished since it exceeds the max interation.')
     print(' Elapsed time = {0:.1f} sec.'.format(time.time()-start))

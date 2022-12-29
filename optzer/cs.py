@@ -36,6 +36,13 @@ _fname_gen = 'out.cs.generations'
 _fname_ind = 'out.cs.individuals'
 _fname_db = 'db.optzer.json'
 
+def test_DB_vs_vnames(db, vnames):
+    """Test the consistency between given DB and vnames."""
+    colnames = db.columns
+    for k in vnames:
+        if not k in colnames:
+            return False
+    return True
 
 class CS:
     """
@@ -105,6 +112,11 @@ class CS:
                 print(f'\n !!! Failed to load {_fname_db} for restart. !!!'
                       +'\n !!! So start with the given initial guess.     !!!')
             print(f'\n Restarting with existing DB, {_fname_db}.')
+
+        #...Check the consistency between DB and given vnames
+        if not test_DB_vs_vnames(self.history_db, self.vnames):
+            raise ValueError('DB and vnames are not consistent, which is not allowed.\n'
+                             +f'Please delete {_fname_db} and try again.')
                 
         #...initialize population
         self.population = []
@@ -142,47 +154,6 @@ class CS:
                 self.population.append(ind)
                 self.iidinc += 1
                 
-
-        #...Evaluate loss function values
-        prcs = []
-        if self.nproc > 0 :  # use specified number of cores by nproc
-            pool = Pool(processes=self.nproc)
-        else:
-            pool = Pool()
-            
-        for ip,ind in enumerate(self.population):
-            kwtmp = copy.copy(self.kwargs)
-            kwtmp['index'] = ip
-            kwtmp['iid'] = ind.iid
-            prcs.append(pool.apply_async(ind.calc, (self.loss_func,kwtmp,)))
-        results = [ res.get() for res in prcs ]
-        for res in results:
-            loss,ip = res
-            self.population[ip].loss = loss
-            self.population[ip].gen = self.igen0
-
-        pool.close()
-        
-        self.keep_best()
-        #...Create history DB if not exists
-        pop2dfs = [ pi.to_DataFrame() for pi in self.population ]
-        self.history_db = pd.concat([self.history_db] +pop2dfs,
-                                    ignore_index=True)
-            
-        # if self.print_level > 2:
-        #     for ind in self.population:
-        #         fname = 'in.vars.optzer.{0:d}'.format(ind.iid)
-        #         self.write_variables(ind,
-        #                              fname=fname,
-        #                              **self.kwargs)
-        # else:
-        #     fname = 'in.vars.optzer.{0:d}'.format(self.bestind.iid)
-        #     self.write_variables(self.bestind,
-        #                          fname=fname,
-        #                          **self.kwargs)
-
-        #...Once the history is updated, dump it to the file
-        write_db_optzer(self.history_db,fname=_fname_db)
         return None
 
     def keep_best(self):
@@ -219,33 +190,42 @@ class CS:
         """
 
         if 'start' in self.kwargs.keys():
-            start = self.kwargs['start']
+            starttime = self.kwargs['start']
         else:
-            start = time()
-
-        if self.print_level > 0:
-            print(' step,time,best_iid,best_loss,vars='
-                  +' {0:6d} {1:8.1f} {2:5d} {3:8.4f}'.format(self.igen0,
-                                                             time()-start,
-                                                             self.bestind.iid,
-                                                             self.bestind.loss),
-                  end="")
-            inc = 0
-            for k in self.vnames:
-                if inc < 16:
-                    print(' {0:6.3f}'.format(self.bestind.vs[k]),end="")
-                else:
-                    break
-                inc += 1
-            print('', flush=True)
+            starttime = time()
 
         #...Create pool before going into max_gen-loop,
         #...since creating pool inside could cause "Too many files" error.
+        prcs = []
         if self.nproc > 0 :  # use specified number of cores by nproc
             pool = Pool(processes=self.nproc)
         else:
             pool = Pool()
             
+        #...Evaluate loss function values
+        for ip,ind in enumerate(self.population):
+            kwtmp = copy.copy(self.kwargs)
+            kwtmp['index'] = ip
+            kwtmp['iid'] = ind.iid
+            prcs.append(pool.apply_async(ind.calc, (self.loss_func,kwtmp,)))
+        results = [ res.get() for res in prcs ]
+        for res in results:
+            loss,ip = res
+            self.population[ip].loss = loss
+            self.population[ip].gen = self.igen0
+
+        self.keep_best()
+        #...Create history DB if not exists
+        pop2dfs = [ pi.to_DataFrame() for pi in self.population ]
+        self.history_db = pd.concat([self.history_db] +pop2dfs,
+                                    ignore_index=True)
+            
+        #...Once the history is updated, dump it to the file
+        write_db_optzer(self.history_db,fname=_fname_db)
+        
+        if self.print_level > 0:
+            self._write_step_info( self.igen0, starttime)
+
         for igen in range(self.igen0, self.igen0+max_gen):
             self.sort_individuals()
             #...Create candidates from current population using Levy flight
@@ -360,19 +340,7 @@ class CS:
                     print(' {0:>10s}:  {1:7.3f}  {2:7.3f}'.format(k,self.slims[k][0],self.slims[k][1]))
             
             if self.print_level > 0:
-                print(' step,time,best_iid,best_loss,vars='
-                      +' {0:6d} {1:8.1f} {2:5d} {3:8.4f}'.format(igen+1,time()-start,
-                                                                 self.bestind.iid,
-                                                                 self.bestind.loss),end="")
-
-                inc = 0
-                for k in self.vnames:
-                    if inc < 16:
-                        print(' {0:6.3f}'.format(self.bestind.vs[k]),end="")
-                    else:
-                        break
-                    inc += 1
-                print('', flush=True)
+                self._write_step_info(igen, starttime)
 
         pool.close()
         #...Finaly write out the best one
@@ -386,6 +354,24 @@ class CS:
             self.write_func(ind.vnames, ind.vs, self.slims, self.hlims,
                             fname, **kwargs)
         return None
+
+    def _write_step_info(self, istp, starttime):
+        print(' step,time,best_iid,best_loss,vars='
+              +' {0:6d} {1:8.1f} {2:5d} {3:8.4f}'.format(self.igen0,
+                                                         time()-starttime,
+                                                         self.bestind.iid,
+                                                         self.bestind.loss),
+              end="")
+        inc = 0
+        for k in self.vnames:
+            if inc < 16:
+                print(' {0:6.3f}'.format(self.bestind.vs[k]),end="")
+            else:
+                break
+            inc += 1
+        print('', flush=True)
+        return None
+        
 
 def main():
     args = docopt(__doc__.format(os.path.basename(sys.argv[0])))
