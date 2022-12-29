@@ -44,3 +44,6 @@ Please leave questions and requests on issues in the github repository page.
 
 This software is released under the MIT License, see the LICENSE.
 
+# Acknowlegements
+
+This software was developed at [Nagoya Institute of Technology](https://www.nitech.ac.jp/), and supported by JSPS KAKENHI Grand Numbers 21K04650, JP20H05290 and 22H04613 (Grant-in-Aid for Scientific Research on Innovative Areas *[Interface Ionics](https://interface-ionics.jp/)*).
