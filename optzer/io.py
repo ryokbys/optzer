@@ -389,4 +389,3 @@ def read_db_optzer(fname='db.optzer.json'):
     except:
         raise
     return db
-
