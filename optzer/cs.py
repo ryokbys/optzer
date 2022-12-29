@@ -150,8 +150,8 @@ class CS:
                                        bestidx,
                                        self.vnames, self.slims)
             #...Generate random population with the updated slims
-            self.iidinc = int(self.history_db.iid.max()) +1
-            self.igen0 = int(self.history_db.gen.max()) +1
+            self.iidinc = self.history_db.iid.max() +1
+            self.igen0 = self.history_db.gen.max() +1
             for i in range(self.nind):
                 ind = Individual(self.iidinc, self.vnames)
                 ind.init_random(self.slims)
