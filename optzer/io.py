@@ -386,6 +386,8 @@ def read_db_optzer(fname='db.optzer.json'):
     """Read db_optzer in JSON format."""
     try:
         db = pd.read_json(fname, orient='records', lines=True)
+        db.iid = db.iid.astype(int)
+        db.gen = db.gen.astype(int)
     except:
         raise
     return db
