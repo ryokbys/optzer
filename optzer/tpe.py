@@ -13,7 +13,8 @@ from docopt import docopt
 import numpy as np
 import random
 import copy
-from multiprocessing import Process, Pool
+#from multiprocessing import Process, Pool
+from multiprocess import Pool
 from time import time
 import pandas as pd
 
@@ -158,7 +159,7 @@ class TPE:
         #...Try to restart by loading db.optzer.json if exists
         if os.path.exists(_fname_db):
             try:
-                self.history_db = pd.read_json(_fname_db)
+                self.history_db = read_db_optzer(_fname_db)
             except Exception as e:
                 print(e)
                 print(f'\n !!! Failed to load {_fname_db} for restart. !!!'
@@ -318,7 +319,7 @@ class TPE:
 
     def _write_step_info(self,istp,starttime):
         print(' step,time,best_iid,best_loss,vars='
-              +' {0:6d} {1:8.1f} {2:5d} {3:8.4f}'.format(istp+1,
+              +' {0:6d} {1:8.1f} {2:5d} {3:8.4f}'.format(istp,
                                                          time()-starttime,
                                                          self.bestsmpl.iid,
                                                          self.bestsmpl.loss),end="")

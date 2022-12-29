@@ -41,7 +41,7 @@ from optzer.cs import CS
 from optzer.tpe import TPE
 
 __author__ = "RYO KOBAYASHI"
-__version__ = "221227"
+__version__ = "0.2.1"
 
 _infname = 'in.optzer'
 
@@ -100,12 +100,12 @@ class Optzer:
             nind = kwargs['num_individuals']
             frac = kwargs['cs_fraction']
             opt = CS(nind, frac, self.vnames, self.vs, self.slims,
-                     self.hlims, loss_func, write_vars_optzer, 
+                     self.hlims, loss_func, write_func=None, 
                      nproc=self.nproc, seed=self.seed, **kwargs)
         elif kwargs['opt_method'] in ('tpe','TPE','wpe','WPE'):
             opt = TPE(self.nproc, self.vnames, self.vs,
                       self.slims, self.hlims, loss_func,
-                      write_vars_optzer, seed=self.seed, **kwargs)
+                      write_func=None, seed=self.seed, **kwargs)
         
         opt.run(num_iteration)
         return None

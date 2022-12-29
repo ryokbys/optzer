@@ -20,7 +20,8 @@ import numpy as np
 from numpy import exp, sin, cos
 import random
 import copy
-from multiprocessing import Process, Pool
+#from multiprocessing import Process, Pool
+from multiprocess import Pool
 from time import time
 from scipy.special import gamma
 import pandas as pd
@@ -106,12 +107,15 @@ class CS:
         #...Try to restart by loading db.optzer.json if exists
         if os.path.exists(_fname_db):
             try:
-                self.history_db = pd.read_json(_fname_db)
+                self.history_db = read_db_optzer(_fname_db)
+                print(f'\n Restarting with existing DB, {_fname_db}.')
             except Exception as e:
-                print(e)
-                print(f'\n !!! Failed to load {_fname_db} for restart. !!!'
-                      +'\n !!! So start with the given initial guess.     !!!')
-            print(f'\n Restarting with existing DB, {_fname_db}.')
+                print('\n !!!!!'
+                      +f'\n Failed to load {_fname_db} for restart because of {e},'
+                      +' even if it exists...'
+                      +'\n So starting with the given initial guess.'
+                      +'\n !!!!!\n')
+                self.history_db = self.history_db[0:0]  # Remove all records
 
         #...Check the consistency between DB and given vnames
         if not test_DB_vs_vnames(self.history_db, self.vnames):
@@ -153,7 +157,7 @@ class CS:
                 ind.init_random(self.slims)
                 self.population.append(ind)
                 self.iidinc += 1
-                
+
         return None
 
     def keep_best(self):
@@ -357,7 +361,7 @@ class CS:
 
     def _write_step_info(self, istp, starttime):
         print(' step,time,best_iid,best_loss,vars='
-              +' {0:6d} {1:8.1f} {2:5d} {3:8.4f}'.format(self.igen0,
+              +' {0:6d} {1:8.1f} {2:5d} {3:8.4f}'.format(istp,
                                                          time()-starttime,
                                                          self.bestind.iid,
                                                          self.bestind.loss),
