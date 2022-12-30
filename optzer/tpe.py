@@ -30,39 +30,6 @@ _fname_db = 'db.optzer.json'
 def gauss_kernel(x):
     return np.exp(-0.5*x*x)/np.sqrt(2.0*np.pi)
 
-class Sample:
-    """
-    A sample point that has parameter vector and loss value.
-    """
-    def __init__(self, iid, ndim, loss_func):
-        self.iid = iid
-        self.ndim = ndim
-        self.loss_func = loss_func
-        self.variables = np.zeros(self.ndim)
-        self.val = None
-        return None
-
-    def set_variables(self,variables):
-        if len(variables) != len(self.variables):
-            raise ValueError('len(variables) != len(self.variables)')
-
-        self.variables[:] = variables[:]
-        self.val = None
-        return None
-
-    def calc_loss_func(self, vlogs, **kwargs):
-        """
-        Compute loss function value using self.loss_func function given in the constructor.
-        """
-        vec = copy.copy(self.variables)
-        # If vlog != None, some of variables may be expressed in log domain,
-        # they must be transformed back to non-log domain.
-        for i in range(len(vec)):
-            if vlogs[i]:
-                vec[i] = np.exp(vec[i])
-        val = self.loss_func(vec, **kwargs)
-        return val,kwargs['index']
-
 class TPE:
     """
     Class for Tree-based Parzen Estimator (TPE) or Weighted Parzen Estimator (WPE).
@@ -164,7 +131,7 @@ class TPE:
                 print(e)
                 print(f'\n !!! Failed to load {_fname_db} for restart. !!!'
                       +'\n !!! So start with the given initial guess.     !!!')
-            print(f'\n Restarting with existing DB, {_fname_db}.')
+            print(f'\n Restarting with existing DB, {_fname_db}.\n')
 
         #...Initialize sample history
         self.candidates = []

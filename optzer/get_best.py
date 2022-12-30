@@ -13,7 +13,8 @@ Options:
 import os,sys
 import shutil
 from docopt import docopt
-import pandas as pd
+
+from optzer.io import read_db_optzer
 
 # from optzer.io import read_out_optzer
 
@@ -38,7 +39,7 @@ def main():
     args = docopt(__doc__.format(os.path.basename(sys.argv[0])))
     bestdname = args['--bestdir-name']
 
-    db = pd.read_json(_fname_db)
+    db = read_db_optzer(_fname_db)
     bestidx = db.loss.argmin()
     bestiid = db.iid[bestidx]
 

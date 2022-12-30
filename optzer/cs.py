@@ -108,7 +108,7 @@ class CS:
         if os.path.exists(_fname_db):
             try:
                 self.history_db = read_db_optzer(_fname_db)
-                print(f'\n Restarting with existing DB, {_fname_db}.')
+                print(f'\n Restarting with existing DB, {_fname_db}.\n')
             except Exception as e:
                 print('\n !!!!!'
                       +f'\n Failed to load {_fname_db} for restart because of {e},'
