@@ -153,6 +153,9 @@ class TPE:
             self.bestsmpl = ind_from_db(self.history_db,
                                         bestidx,
                                         self.vnames, self.slims)
+            self.slims = update_slims(self.slims, self.hlims,
+                                      self.history_db,
+                                      ntops=max(100,int(len(self.history_db)*self.gamma)))
             #...Generate random population with the updated slims
             self.iidinc = self.history_db.iid.max() +1
             self.igen0 = self.history_db.gen.max() +1
