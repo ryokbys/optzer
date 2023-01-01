@@ -256,7 +256,7 @@ class TPE:
             for res in results:
                 loss, i = res
                 self.candidates[i].loss = loss
-                self.candidates[i].gen = igen+1
+                self.candidates[i].gen = igen
             db_add = [ c.to_DataFrame() for c in self.candidates ]
             self.history_db = pd.concat([self.history_db] +db_add)
             self.history_db.drop_duplicates(subset='iid',
@@ -288,18 +288,18 @@ class TPE:
         return None
 
     def _write_step_info(self,istp,starttime):
-        print(' step,time,best_iid,best_loss,vars='
+        print(' step,time,best_iid,best_loss='
               +' {0:6d} {1:8.1f} {2:5d} {3:8.4f}'.format(istp,
                                                          time()-starttime,
                                                          self.bestsmpl.iid,
                                                          self.bestsmpl.loss),end="")
-        inc = 0
-        for k in self.vnames:
-            if inc < 16:
-                print(' {0:6.3f}'.format(self.bestsmpl.vs[k]),end="")
-            else:
-                break
-            inc += 1
+        # inc = 0
+        # for k in self.vnames:
+        #     if inc < 16:
+        #         print(' {0:6.3f}'.format(self.bestsmpl.vs[k]),end="")
+        #     else:
+        #         break
+        #     inc += 1
         print('', flush=True)
         return None
 

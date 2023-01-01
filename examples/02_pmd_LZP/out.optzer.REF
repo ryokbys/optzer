@@ -2,8 +2,8 @@
  optzer --- optimize parameters of any external program to any target property ---
 
    Executed as /Users/kobayashi/.anyenv/envs/pyenv/versions/nap/bin/optzer --nproc 5 --random-seed 42
-            at /Users/kobayashi/src/optzer/examples/02_pmd_LZP on mbp-rk4
-            at 2022-12-28 22:18:28
+            at /Users/kobayashi/src/optzer/examples/02_pmd_LZP on host-240-26.hosts.nitech.ac.jp
+            at 2023-01-01 14:31:18
 
    Please cite:
      1) R. Kobayashi, J. Open Source Software, 6(57), 2768 (2021)
@@ -22,23 +22,23 @@
  ----------
 
  Initial variable ranges
-     rho_Li:    1.000    1.200
-     rho_Zr:    1.100    1.300
-      rho_P:    0.800    1.100
-      rho_O:    0.800    1.100
-     D_Li-O:    0.800    1.300
-   alp_Li-O:    2.000    2.200
-  rmin_Li-O:    1.700    1.900
-     D_Zr-O:    2.000    3.000
-   alp_Zr-O:    1.900    2.200
-  rmin_Zr-O:    1.900    2.000
-      D_P-O:    4.000    5.000
-    alp_P-O:    1.900    2.200
-   rmin_P-O:    1.400    1.600
- alp_Zr-O-O:    1.000    3.000
- gmm_Zr-O-O:   -0.500    0.500
-  alp_P-O-O:    1.000    3.000
-  gmm_P-O-O:   -0.500    0.500
+          rho_Li:    1.000    1.200
+          rho_Zr:    1.100    1.300
+           rho_P:    0.800    1.100
+           rho_O:    0.800    1.100
+          D_Li-O:    0.800    1.300
+        alp_Li-O:    2.000    2.200
+       rmin_Li-O:    1.700    1.900
+          D_Zr-O:    2.000    3.000
+        alp_Zr-O:    1.900    2.200
+       rmin_Zr-O:    1.900    2.000
+           D_P-O:    4.000    5.000
+         alp_P-O:    1.900    2.200
+        rmin_P-O:    1.400    1.600
+      alp_Zr-O-O:    1.000    3.000
+      gmm_Zr-O-O:   -0.500    0.500
+       alp_P-O-O:    1.000    3.000
+       gmm_P-O-O:   -0.500    0.500
 
  Reference data and weights:
               rdf  1.000
@@ -50,13 +50,13 @@
    iid,losses=        2     3.4900     0.8536    19.7982    24.14180
    iid,losses=        1     2.1393     0.7621     7.6519    10.55335
    iid,losses=        4     0.4596     0.3769     1.6410     2.47756
- step,time,best_iid,best_loss,vars=      0     13.7     4   2.4776  1.193  1.262  0.891  0.829  1.142  2.088  1.724  2.495  1.910  1.991  4.259  2.099  1.462  2.040  0.047  1.370
+ step,time,best_iid,best_loss=      0     13.4     4   2.4776
    iid,losses=        8     6.3359     0.9942    25.8651    33.19519
    iid,losses=        7     3.6779     0.8047    16.8127    21.29532
    iid,losses=        6     2.0658     0.7577     7.6172    10.44070
    iid,losses=        5     0.5379     0.4912     2.3523     3.38133
    iid,losses=        9     0.4758     0.0995     0.1739     0.74922
- step,time,best_iid,best_loss,vars=      1     30.0     9   0.7492  1.054  1.188  0.824  0.808  1.281  2.167  1.839  2.409  1.952  1.916  4.250  2.065  1.543  2.320 -0.220  2.910
+ step,time,best_iid,best_loss=      1     29.2     9   0.7492
 
  optzer finished since it exceeds the max interation.
- Elapsed time = 30.0 sec.
+ Elapsed time = 29.3 sec.

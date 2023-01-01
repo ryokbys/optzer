@@ -1,10 +1,10 @@
-num_iteration       10
+num_iteration       1
 print_level         1
 
 target        rdf adf vol
 param_files   in.params.Coulomb in.params.Morse in.params.angular
 
-opt_method     cs
+opt_method       cs
 # opt_method     wpe
 num_individuals   4
 cs_fraction          0.25

@@ -230,7 +230,7 @@ class CS:
         if self.print_level > 0:
             self._write_step_info( self.igen0, starttime)
 
-        for igen in range(self.igen0, self.igen0+max_gen):
+        for igen in range(self.igen0+1, self.igen0+1+max_gen):
             self.sort_individuals()
             #...Create candidates from current population using Levy flight
             candidates = []
@@ -286,14 +286,14 @@ class CS:
             for res in results:
                 loss,ic = res
                 candidates[ic].loss = loss
-                candidates[ic].gen = igen+1
+                candidates[ic].gen = igen
             db_add = [ c.to_DataFrame() for c in candidates ] 
 
             for res in rnd_results:
                 loss,ic_rnd = res
                 ic = ic_rnd -len(candidates)
                 rnd_candidates[ic].loss = loss
-                rnd_candidates[ic].gen = igen+1
+                rnd_candidates[ic].gen = igen
             db_add.extend([ c.to_DataFrame() for c in rnd_candidates ])
             self.history_db = pd.concat([self.history_db] +db_add)
             self.history_db.drop_duplicates(subset='iid',
@@ -336,7 +336,8 @@ class CS:
                                      **self.kwargs)
 
             #...Update variable ranges if needed
-            if self.update_slims_per > 0 and (igen+1) % self.update_slims_per == 0:
+            if self.update_slims_per > 0 and igen != 0 and \
+               igen % self.update_slims_per == 0:
                 self.slims = update_slims(self.slims,self.hlims,
                                           self.history_db)
                 print(' Update variable ranges')
@@ -360,19 +361,19 @@ class CS:
         return None
 
     def _write_step_info(self, istp, starttime):
-        print(' step,time,best_iid,best_loss,vars='
+        print(' step,time,best_iid,best_loss='
               +' {0:6d} {1:8.1f} {2:5d} {3:8.4f}'.format(istp,
                                                          time()-starttime,
                                                          self.bestind.iid,
                                                          self.bestind.loss),
               end="")
-        inc = 0
-        for k in self.vnames:
-            if inc < 16:
-                print(' {0:6.3f}'.format(self.bestind.vs[k]),end="")
-            else:
-                break
-            inc += 1
+        # inc = 0
+        # for k in self.vnames:
+        #     if inc < 16:
+        #         print(' {0:6.3f}'.format(self.bestind.vs[k]),end="")
+        #     else:
+        #         break
+        #     inc += 1
         print('', flush=True)
         return None
         
