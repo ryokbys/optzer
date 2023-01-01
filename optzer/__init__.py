@@ -88,7 +88,7 @@ class Optzer:
             self.hlims = hlims
         return None
 
-    def optimize(self, loss_func, num_iteration=0, **kwargs):
+    def optimize(self, loss_func, num_iteration=0, write_func=None, **kwargs):
         """Perform optimization of the given loss function.
 
         loss_func: callback function
@@ -100,12 +100,13 @@ class Optzer:
             nind = kwargs['num_individuals']
             frac = kwargs['cs_fraction']
             opt = CS(nind, frac, self.vnames, self.vs, self.slims,
-                     self.hlims, loss_func, write_func=None, 
+                     self.hlims, loss_func, write_func=write_func,
                      nproc=self.nproc, seed=self.seed, **kwargs)
         elif kwargs['opt_method'] in ('tpe','TPE','wpe','WPE'):
             opt = TPE(self.nproc, self.vnames, self.vs,
                       self.slims, self.hlims, loss_func,
-                      write_func=None, seed=self.seed, **kwargs)
+                      write_func=write_func,
+                      seed=self.seed, **kwargs)
         
         opt.run(num_iteration)
         return None
@@ -345,7 +346,7 @@ def main():
     print('      total')
 
     maxiter = kwargs['num_iteration']
-    opt.optimize(func_wrapper, **kwargs)
+    opt.optimize(func_wrapper, write_func=write_vars_optzer, **kwargs)
 
     # maxiter = kwargs['num_iteration']
     # if kwargs['opt_method'] in ('cs','CS','cuckoo','Cuckoo'):
