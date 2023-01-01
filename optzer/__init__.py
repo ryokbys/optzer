@@ -275,7 +275,7 @@ def func_wrapper(variables, **kwargs):
         for f in glob.glob('out.*'):
             txt += f' {f}'
         for f in glob.glob('*.yaml'):
-            text += f' {f}'
+            txt += f' {f}'
         os.system("cp {0} iid_{1:d}/".format(txt,kwargs['iid']))
         os.chdir(cwd)
     except Exception as e:
