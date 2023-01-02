@@ -21,7 +21,7 @@ Options:
               Random seed for reproducibility, if negative current time in second is applied. [default: -1]
 """
 
-__all__ = ['io','get_best','opt2md','opt2prms']
+__all__ = ['io','get_best','out2md','out2prms','db2csv','db2prms','individual']
 
 import os
 import sys
@@ -34,7 +34,7 @@ import subprocess
 import time
 from datetime import datetime
 
-from optzer.opt2prms import vars2params
+from optzer.out2prms import vars2params
 from optzer.io import read_in_optzer, write_info, write_vars_optzer, \
     read_vars_optzer, read_data
 from optzer.cs import CS
