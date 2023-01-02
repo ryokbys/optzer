@@ -3,7 +3,7 @@
 Convert optzer parameters `in.vars.optzer` to parameter files.
 
 Usage:
-  opt2prms.py [options] <v-file> <p-files> [<p-files>...]
+  {0:s} [options] <v-file> <p-files> [<p-files>...]
 
 Options:
   -h, --help  Show this message and exit.
@@ -11,7 +11,7 @@ Options:
 import os
 from docopt import docopt
 
-from .io import read_vars_optzer
+from optzer.io import read_vars_optzer
 
 __author__ = "RYO KOBAYASHI"
 __version__ = "221223"

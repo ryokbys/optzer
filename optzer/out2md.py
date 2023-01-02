@@ -11,7 +11,7 @@ Options:
 import os,sys
 
 from docopt import docopt
-from .io import read_out_optzer
+from optzer.io import read_out_optzer
 
 __author__ = "Ryo KOBAYASHI"
 __version__ = "221224"

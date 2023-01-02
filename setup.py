@@ -19,7 +19,7 @@ URL = 'https://github.com/ryokbys/optzer'
 EMAIL = 'ryo.kbys@gmail.com'
 AUTHOR = 'Ryo KOBAYASHI'
 REQUIRES_PYTHON = '>=3.6.0'
-VERSION = '0.2.3'
+VERSION = '0.2.5'
 
 # What packages are required for this module to be executed?
 REQUIRED = [
@@ -110,10 +110,11 @@ setup(
 
     entry_points={
         'console_scripts': ['optzer=optzer.__init__:main',
-                            'optzer-to-md=optzer.opt2md:main',
-                            'optzer-to-prms=optzer.opt2prms:main',
+                            'optzer-out2md=optzer.out2md:main',
+                            'optzer-out2prms=optzer.out2prms:main',
                             'optzer-get-best=optzer.get_best:main',
-                            'optzer-db2csv=optzer.db2csv:main'],
+                            'optzer-db2csv=optzer.db2csv:main',
+                            'optzer-db2prms=optzer.db2prms:main',],
     },
     install_requires=REQUIRED,
     extras_require=EXTRAS,

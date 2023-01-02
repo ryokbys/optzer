@@ -21,7 +21,6 @@ import pandas as pd
 from optzer.individual import Individual, ind_from_db, update_slims
 from optzer.io import write_db_optzer, read_db_optzer
 
-
 __author__ = "RYO KOBAYASHI"
 __version__ = "221228"
 

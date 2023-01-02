@@ -342,7 +342,7 @@ class CS:
                                           self.history_db)
                 print(' Update variable ranges')
                 for k in self.vnames:
-                    print(' {0:>10s}:  {1:7.3f}  {2:7.3f}'.format(k,self.slims[k][0],self.slims[k][1]))
+                    print(' {0:>15s}:  {1:7.3f}  {2:7.3f}'.format(k,self.slims[k][0],self.slims[k][1]))
             
             if self.print_level > 0:
                 self._write_step_info(igen, starttime)

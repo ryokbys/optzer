@@ -41,7 +41,7 @@ from optzer.cs import CS
 from optzer.tpe import TPE
 
 __author__ = "RYO KOBAYASHI"
-__version__ = "0.2.3"
+__version__ = "0.2.5"
 
 _infname = 'in.optzer'
 
@@ -253,6 +253,7 @@ def func_wrapper(variables, **kwargs):
     #...Do sub-jobs in the subdir_###
     iid = kwargs['iid']
     L_up_lim = kwargs['fval_upper_limit']
+    subjob_done = True
     if print_level > 1:
         print('Performing subjobs at '+subdir, flush=True)
     try:
@@ -269,30 +270,32 @@ def func_wrapper(variables, **kwargs):
                   +'the upper limit value is applied to its loss function.',
                   flush=True)
         os.chdir(cwd)
+        subjob_done = False
         L = L_up_lim
 
-    try:
-        #...Store data in iid_### directories
-        os.mkdir("iid_{0:d}".format(iid))
-        txt = ''
-        for t in kwargs['target']:
-            files = glob.glob(f'data*{t}')
-            if f'data.ref.{t}' in files:
-                files.remove(f'data.ref.{t}')
-            txt += ' {0:s}'.format(files[0])
-        for f in kwargs['param_files']:
-            txt += f' {f}'
-        for f in glob.glob('out.*'):
-            txt += f' {f}'
-        for f in glob.glob('*.yaml'):
-            txt += f' {f}'
-        os.system("cp {0} iid_{1:d}/".format(txt,iid))
-        os.chdir(cwd)
-    except Exception as e:
-        if print_level > 0:
-            print('  Something wrong with storing data for iid_{1:d}.'.format(iid))
-            print('    Error: ', e)
-        pass
+    if subjob_done:
+        try:
+            #...Store data in iid_### directories
+            os.mkdir("iid_{0:d}".format(iid))
+            txt = ''
+            for t in kwargs['target']:
+                files = glob.glob(f'data*{t}')
+                if f'data.ref.{t}' in files:
+                    files.remove(f'data.ref.{t}')
+                txt += ' {0:s}'.format(files[0])
+            for f in kwargs['param_files']:
+                txt += f' {f}'
+            for f in glob.glob('out.*'):
+                txt += f' {f}'
+            for f in glob.glob('*.yaml'):
+                txt += f' {f}'
+            os.system("cp {0} iid_{1:d}/".format(txt,iid))
+            os.chdir(cwd)
+        except Exception as e:
+            if print_level > 0:
+                print('  Something wrong with storing data for iid_{0:d}.'.format(iid))
+                print('    Error: ', e)
+            pass
         
     return L
     
