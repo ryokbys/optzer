@@ -385,7 +385,7 @@ def headline():
     print('            at {0:s}'.format(datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
     print()
     print('   Please cite:')
-    print('     1) R. Kobayashi, J. Open Source Software, 6(57), 2768 (2021)')
+    print('     1) github.com/ryokbys/optzer')
     print()
     return None
 
