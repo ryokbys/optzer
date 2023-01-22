@@ -100,7 +100,7 @@ def read_out_optzer(fname='out.optzer'):
 
     targets = []
     weights = []
-    losses = []
+    losses = {}
     mode = ''
     for line in lines:
         if 'weights:' in line:
@@ -110,12 +110,13 @@ def read_out_optzer(fname='out.optzer'):
             data = line.split()
             targets = [ t for t in data[3:] ]
             continue
-        elif 'iid,losses' in line and ' {0:d} '.format(bestiid) in line:
+        elif 'iid,losses' in line:
             if len(targets) < 1:
                 raise ValueError('len(targets) < 1 !!!')
             data = line.split()
-            losses = [ float(l) for l in data[2:] ]
-            break
+            iid = int(data[1])
+            losses[iid] = [ float(l) for l in data[2:] ]
+            #break
         if mode == 'weights':
             data = line.split()
             if len(data) != 2:

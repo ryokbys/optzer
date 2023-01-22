@@ -310,23 +310,29 @@ class TPE:
         nlow = int(self.gamma *len(losses))
         nhigh = len(losses) -nlow
         argpart = np.argpartition(losses,nlow)
+        argsrt = np.argsort(losses)
         Xlow = np.zeros((nlow,self.ndim))
         Xhigh = np.zeros((nhigh,self.ndim))
         for i in range(nlow):
-            idx = argpart[i]
+            #idx = argpart[i]
+            idx = argsrt[i]
             vs = ind_from_db(self.history_db,idx,self.vnames,self.slims).vs
             for j,k in enumerate(self.vnames):
                 Xlow[i,j] = vs[k]
         for i in range(nhigh):
-            idx = argpart[nlow+i]
+            #idx = argpart[nlow+i]
+            idx = argsrt[nlow+i]
             vs = ind_from_db(self.history_db,idx,self.vnames,self.slims).vs
             for j,k in enumerate(self.vnames):
                 Xhigh[i,j] = vs[k]
+        
 
         #...Sampling variable candidates
         xcandidates = np.empty((self.nbatch,self.ndim))
         ntrial = max(self.ntrial,self.nbatch)
+        # print('')
         for idim in range(self.ndim):
+            # print('idim = ',idim)
             key = self.vnames[idim]
             # xhmin = self.hlims[key][0]
             # xhmax = self.hlims[key][1]
@@ -339,11 +345,16 @@ class TPE:
             std = np.std(xlowsrt)
             sgm = min(std, (q75-q25)/1.34)
             h = 1.06 *sgm /np.power(npnt, 1.0/5)
+            # print(f'  q25,q75,std,sgm,h= {q25:.3f}, {q75:3f},'
+            #       +f' {std:.3f}, {sgm:.3f}, {h:.3f}')
+            # print('  xlowsrt=',xlowsrt)
             #...Prepare for g(x)
             xhighsrt = Xhigh[:,idim]
             q75, q25 = np.percentile(xhighsrt, [75,25])
             sgmh = min(np.std(xhighsrt), (q75-q25)/1.34)
             hh = 1.06 *sgmh /np.power(len(xhighsrt),1.0/5)
+            # print(f'  q25,q75,sgmh,hh= {q25:.3f}, {q75:3f},'
+            #       +f' {sgmh:.3f}, {hh:.3f}')
             #...Several trials for selection
             aquisition = np.zeros(ntrial)
             xs = np.empty(ntrial)
@@ -371,6 +382,8 @@ class TPE:
             #...Pick nbatch of minimum aquisition points
             idxsort = np.argsort(aquisition)
             xcandidates[:,idim] = xs[idxsort[0:self.nbatch]]
+            # print('  aquisition=',aquisition[idxsort[0:self.nbatch]])
+            # print('  xcandidates=',xcandidates[:,idim])
         #...Create sample with xcandidate as variables
         candidates = []
         for ib in range(self.nbatch):
@@ -383,7 +396,7 @@ class TPE:
             candidates.append(smpl)
         return candidates
 
-    def _candidates_by_WPE(self,):
+    def _candidates_by_WPE(self,veps=1e-8):
         """
         Create candidates by using WPE.
         """
@@ -398,8 +411,9 @@ class TPE:
             #tmpsmpls = copy.copy(self.history)
             tmpsmpls = [ ind_from_db(self.history_db,idx,self.vnames,self.slims)
                          for idx in self.history_db.index ]
+
         vmin = losses.min()
-        wgts = np.array([ np.exp(-(v-vmin)/vmin) for v in losses ])
+        wgts = np.array([ np.exp(-(v-vmin)/(vmin+veps)) for v in losses ])
         xtmps = np.zeros((len(tmpsmpls),self.ndim))
         for i in range(len(tmpsmpls)):
             for j,k in enumerate(self.vnames):

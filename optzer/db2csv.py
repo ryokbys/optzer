@@ -14,8 +14,6 @@ from docopt import docopt
 import pandas as pd
 from optzer.io import read_db_optzer
 
-# from optzer.io import read_out_optzer
-
 __author__ = "RYO KOBAYASHI"
 __version__ = "221227"
 
