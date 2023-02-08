@@ -14,6 +14,7 @@ def read_in_optzer(fname='in.optzer'):
     infp['weights'] = {'rdf':1.0, 'adf':1.0, 'vol':1.0, 'lat':1.0}
     infp['update_vrange'] = -1
     infp['vars_file'] = 'in.vars.optzer'
+    infp['criterion'] = -1.0
 
     mode = None
     infp['target'] = []
@@ -78,6 +79,9 @@ def read_in_optzer(fname='in.optzer'):
             mode = None
         elif data[0] == 'update_vrange':
             infp['update_vrange'] = int(data[1])
+            mode = None
+        elif data[0] == 'criterion':
+            infp['criterion'] = float(data[1])
             mode = None
         else:
             mode = None
@@ -154,6 +158,8 @@ def write_info(infp,args):
         pass
     else:
         print('   There is no such opt_method...')
+    if infp['criterion'] > 0.0:
+        print('   criterion       {0:.3f}'.format(infp['criterion']))
     print('   num_iteration   {0:d}'.format(infp['num_iteration']))
     print('   missing_value   {0:.1f}'.format(infp['missing_value']))
     print(' ----------')

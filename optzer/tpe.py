@@ -38,7 +38,7 @@ class TPE:
     """
 
     def __init__(self, nbatch, vnames, vs0, slims, hlims, loss_func,
-                 write_func=None, seed=42, **kwargs):
+                 write_func=None, seed=42, criterion=-1.0, **kwargs):
         """
         Conctructor of TPE class.
 
@@ -55,6 +55,9 @@ class TPE:
               Loss function to be minimized with variables and **kwargs.
           write_func : function
               Function for outputing some info.
+          criterion: float
+              Convergence criterion for the loss.
+              If negtive (default), not to set criterion.
         """
         if nbatch < 1:
             raise ValueError('nbatch must be > 0.')
@@ -72,6 +75,7 @@ class TPE:
             self.vlogs = kwargs['vlogs']
         self.loss_func = loss_func
         self.write_func = write_func
+        self.criterion = criterion
         self.kwargs = kwargs
         self.best_pnt = None
         self.print_level = 0
@@ -224,6 +228,14 @@ class TPE:
         if self.print_level > 0:
             self._write_step_info(self.igen0,starttime)
 
+        if self.criterion > 0.0:
+            if self.bestsmpl.loss < self.criterion:
+                print(' Convergence achieved since the best loss < criterion.\n'
+                      +'   Best loss and criterion = '
+                      +'{0:.3f}  {1:.3f}'.format(self.bestsmpl.loss,
+                                                 self.criterion))
+                return None
+
         #...TPE loop starts
         for igen in range(self.igen0+1, self.igen0+1+maxstp):
             #...Create candidates by either random or TPE
@@ -283,7 +295,16 @@ class TPE:
             if self.print_level > 0:
                 self._write_step_info(igen,starttime)
             
+            if self.criterion > 0.0:
+                if self.bestsmpl.loss < self.criterion:
+                    print(' Convergence achieved since the best loss < criterion.\n'
+                          +'   Best loss and criterion = '
+                          +'{0:.3f}  {1:.3f}'.format(self.bestsmpl.loss,
+                                                     self.criterion))
+                    return None
+
         pool.close()
+        print(' Finished since it exceeds the max iteration')
         return None
 
     def _write_step_info(self,istp,starttime):

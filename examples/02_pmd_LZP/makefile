@@ -13,7 +13,7 @@ init: veryclean
 run:
 	optzer --nproc 5 --random-seed 42 2>&1 | tee out.optzer
 
-test:
+test: init
 	@echo " Testing optzer in examples/02_pmd_LZP; this could take a few minutes..."
 	@optzer --nproc 5 --random-seed 42 2>&1 > out.optzer
 	@python test.py 2>&1 > /dev/null || (echo " FAIL: examples/02_pmd_LZP" && exit 1)

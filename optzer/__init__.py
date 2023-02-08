@@ -369,7 +369,7 @@ def main():
     #               write_vars_optzer, seed=seed, **kwargs)
     # opt.run(maxiter)
 
-    print('\n optzer finished since it exceeds the max interation.')
+    # print('\n optzer finished since it exceeds the max interation.')
     print(' Elapsed time = {0:.1f} sec.'.format(time.time()-start))
     
     return None

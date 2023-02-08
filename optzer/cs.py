@@ -52,7 +52,7 @@ class CS:
 
     def __init__(self, nind, frac, vnames, vs0, slims,
                  hlims, loss_func, write_func=None,
-                 nproc=0, seed=42, **kwargs):
+                 nproc=0, seed=42, criterion=-1.0, **kwargs):
         """
         Conctructor of CS class.
 
@@ -68,6 +68,8 @@ class CS:
             Initial guess of variables.
         slims,hlims: dict
             Set of variables with names.
+        criterion: float
+            Convergence criterion for the loss. If negtive (default), not to set criterion.
         """
         if nind < 2:
             raise ValueError('nind must be greater than 1 in CS!')
@@ -85,6 +87,7 @@ class CS:
             self.vws[k] = max(self.slims[k][1] -self.slims[k][0], 0.0)
         self.loss_func = loss_func
         self.write_func = write_func
+        self.criterion = criterion
         self.kwargs = kwargs
         self.bestind = None
         self.print_level = 0
@@ -230,6 +233,14 @@ class CS:
         if self.print_level > 0:
             self._write_step_info( self.igen0, starttime)
 
+        if self.criterion > 0.0:
+            if self.bestind.loss < self.criterion:
+                print(' Convergence achieved since the best loss < criterion.\n'
+                      +'   Best loss and criterion = '
+                      +'{0:.3f}  {1:.3f}'.format(self.bestind.loss,
+                                                 self.criterion))
+                return None
+
         for igen in range(self.igen0+1, self.igen0+1+max_gen):
             self.sort_individuals()
             #...Create candidates from current population using Levy flight
@@ -335,6 +346,14 @@ class CS:
                                      fname='in.vars.optzer.best',
                                      **self.kwargs)
 
+            if self.criterion > 0.0:
+                if self.bestind.loss < self.criterion:
+                    print(' Convergence achieved since the best loss < criterion.\n'
+                          +'   Best loss and criterion = '
+                          +'{0:.3f}  {1:.3f}'.format(self.bestind.loss,
+                                                     self.criterion))
+                    return None
+            
             #...Update variable ranges if needed
             if self.update_slims_per > 0 and igen != 0 and \
                igen % self.update_slims_per == 0:
@@ -348,10 +367,7 @@ class CS:
                 self._write_step_info(igen, starttime)
 
         pool.close()
-        #...Finaly write out the best one
-        self.write_variables(self.bestind,
-                             fname='in.vars.optzer.best',
-                             **self.kwargs)
+        print(' Finished since it exceeds the max iteration')
         return None
 
     def write_variables(self,ind,fname='in.vars.optzer',**kwargs):
