@@ -16,7 +16,7 @@ run:
 test: init
 	@echo " Testing optzer in examples/02_pmd_LZP; this could take a few minutes..."
 	@optzer --nproc 5 --random-seed 42 2>&1 > out.optzer
-	@python test.py 2>&1 > /dev/null || (echo " FAIL: examples/02_pmd_LZP" && exit 1)
+	@python test.py 2>&1 > /dev/null || (echo " FAIL: examples/02_pmd_LZP, but this could be because of pmd, not optzer" && exit 1)
 	@echo " PASS: examples/02_pmd_LZP"
 
 resdir := result_$(shell date "+%y%m%d_%H%M")
