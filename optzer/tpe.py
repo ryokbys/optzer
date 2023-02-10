@@ -69,8 +69,8 @@ class TPE:
         self.vnames = vnames
         self.vs0 = vs0
         self.hlims = hlims
-        #self.slims = slims
-        self.slims = hlims  # Since slims is not used, use hlims instead as slims
+        self.slims = slims
+        self.hlims = hlims
         self.vlogs = { k:False for k in vnames }
         if 'vlogs' in kwargs.keys():
             self.vlogs = kwargs['vlogs']
@@ -149,6 +149,7 @@ class TPE:
                 if i == 0:
                     smpl.set_variables(self.vs0, self.slims)
                 else:
+                    #...Random pick in soft bounds
                     smpl.init_random(self.slims)
                 self.candidates.append(smpl)
         else:  # DB loaded
