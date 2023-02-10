@@ -83,6 +83,12 @@ def read_in_optzer(fname='in.optzer'):
         elif data[0] == 'criterion':
             infp['criterion'] = float(data[1])
             mode = None
+        elif data[0] == 'temperature':
+            infp['temperature'] = float(data[1])
+            if len(data) > 2:
+                infp['initial_temperature'] = float(data[1])
+                infp['final_temperature'] = float(data[2])
+            mode = None
         else:
             mode = None
             pass

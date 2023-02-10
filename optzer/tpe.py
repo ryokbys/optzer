@@ -38,7 +38,8 @@ class TPE:
     """
 
     def __init__(self, nbatch, vnames, vs0, slims, hlims, loss_func,
-                 write_func=None, seed=42, criterion=-1.0, **kwargs):
+                 write_func=None, seed=42, criterion=-1.0,
+                 **kwargs):
         """
         Conctructor of TPE class.
 
@@ -190,6 +191,19 @@ class TPE:
 
         starttime = time()
 
+        #...Whether of not kwargs contains 'temperature'...
+        if 'initial_temperature' in self.kwargs.keys():
+            tini = self.kwargs['initial_temperature']
+            tfin = self.kwargs['final_temperature']
+            self.kwargs['temperature'] = tini
+            dtemp = (tfin -tini) /max(maxstp,1)
+            print('   Initial,final,delta temperatures = '
+                  + f'{tini:.1f}  {tfin:.1f}  {dtemp:.3f}')
+            print('',flush=True)
+        elif 'temperature' in self.kwargs.keys():
+            print('   Temperature = {0:.1f}'.format(self.kwargs['temperature']))
+            print('',flush=True)
+            
         #...Create pool before going into maxstp-loop,
         #...since creating pool inside could cause "Too many files" error.
         pool = Pool(processes=self.nbatch)
@@ -249,8 +263,13 @@ class TPE:
                     self.candidates.append(newsmpl)
             else:
                 if self.method in ('wpe,''WPE'):
+                    temp = 1.0
+                    if 'temperature' in self.kwargs.keys():
+                        temp = self.kwargs['temperature']
                     #...Create candidates by WPE
-                    self.candidates = self._candidates_by_WPE()
+                    self.candidates = self._candidates_by_WPE(temperature=temp)
+                    if 'initial_temperature' in self.kwargs.keys():
+                        self.kwargs['temperature'] += dtemp
                 else:
                     #...Create candidates by TPE
                     self.candidates = self._candidates_by_TPE()
@@ -417,7 +436,7 @@ class TPE:
             candidates.append(smpl)
         return candidates
 
-    def _candidates_by_WPE(self,veps=1e-8):
+    def _candidates_by_WPE(self,veps=1e-8,temperature=1.0):
         """
         Create candidates by using WPE.
         """
@@ -434,7 +453,8 @@ class TPE:
                          for idx in self.history_db.index ]
 
         vmin = losses.min()
-        wgts = np.array([ np.exp(-(v-vmin)/(vmin+veps)) for v in losses ])
+        wgts = np.array([ np.exp(-(v-vmin)/(vmin+veps)/temperature)
+                          for v in losses ])
         xtmps = np.zeros((len(tmpsmpls),self.ndim))
         for i in range(len(tmpsmpls)):
             for j,k in enumerate(self.vnames):
