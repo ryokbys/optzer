@@ -2,19 +2,19 @@
  optzer --- optimize parameters of any external program to any target property ---
 
    Executed as /Users/kobayashi/.anyenv/envs/pyenv/versions/nap/bin/optzer --nproc 5 --random-seed 42
-            at /Users/kobayashi/src/optzer/examples/02_pmd_LZP on host-240-26.hosts.nitech.ac.jp
-            at 2023-01-01 14:31:18
+            at /Users/kobayashi/src/optzer/examples/02_pmd_LZP on ts3-rk.ogt.nitech.ac.jp
+            at 2023-02-14 11:34:06
 
    Please cite:
-     1) R. Kobayashi, J. Open Source Software, 6(57), 2768 (2021)
+     1) github.com/ryokbys/optzer
 
  Random seed was given: 42
 
  Input
  ----------
-   num of processes (given by --nproc option)   5
+   num of processes    5
    param_files    in.params.Coulomb  in.params.Morse  in.params.angular
-   opt_method  cs
+   opt_method        cs
    num_individuals   4
    fraction           0.2500
    num_iteration   1
@@ -46,17 +46,16 @@
               vol  1.000
 
  # iid,losses=      iid        rdf        adf        vol      total
-   iid,losses=        3     5.1975     0.9758    24.0619    30.23516
-   iid,losses=        2     3.4900     0.8536    19.7982    24.14180
-   iid,losses=        1     2.1393     0.7621     7.6519    10.55335
-   iid,losses=        4     0.4596     0.3769     1.6410     2.47756
- step,time,best_iid,best_loss=      0     13.4     4   2.4776
-   iid,losses=        8     6.3359     0.9942    25.8651    33.19519
-   iid,losses=        7     3.6779     0.8047    16.8127    21.29532
-   iid,losses=        6     2.0658     0.7577     7.6172    10.44070
-   iid,losses=        5     0.5379     0.4912     2.3523     3.38133
-   iid,losses=        9     0.4758     0.0995     0.1739     0.74922
- step,time,best_iid,best_loss=      1     29.2     9   0.7492
-
- optzer finished since it exceeds the max interation.
- Elapsed time = 29.3 sec.
+   iid,losses=        3     4.4619     0.9640    24.0122    29.43807
+   iid,losses=        2     2.8484     0.8761    20.0684    23.79280
+   iid,losses=        1     1.6699     0.7653     7.6697    10.10487
+   iid,losses=        4     0.4659     0.3713     1.6164     2.45360
+ step,time,best_iid,best_loss=      0     12.6     4   2.4536
+   iid,losses=        8     5.0213     0.9908    25.8227    31.83474
+   iid,losses=        7     2.7088     0.8033    16.4804    19.99251
+   iid,losses=        6     1.6111     0.7555     7.4961     9.86263
+   iid,losses=        5     0.5054     0.4978     2.4620     3.46520
+   iid,losses=        9     0.4748     0.1239     0.1907     0.78929
+ step,time,best_iid,best_loss=      1     28.3     9   0.7893
+ Finished since it exceeds the max iteration
+ Elapsed time = 28.3 sec.

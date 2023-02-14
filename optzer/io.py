@@ -71,10 +71,10 @@ def read_in_optzer(fname='in.optzer'):
         elif data[0] == 'tpe_gamma':
             infp['tpe_gamma'] = float(data[1])
             mode = None
-        elif 'tpe_nsmpl_prior' in data[0]:
+        elif 'pe_nsmpl_prior' in data[0]:  # regardless of tpe or wpe
             infp['tpe_nsmpl_prior'] = int(data[1])
             mode = None
-        elif 'tpe_ntrial' in data[0]:
+        elif 'pe_ntrial' in data[0]:  # regardless of tpe or wpe
             infp['tpe_ntrial'] = int(data[1])
             mode = None
         elif data[0] == 'update_vrange':
@@ -143,7 +143,7 @@ def write_info(infp,args):
 
     print('\n Input')
     print(' ----------')
-    print('   num of processes (given by --nproc option)  ',int(args['--nproc']))
+    print('   num of processes   ',int(args['--nproc']))
     try:
         if len(infp['param_files']) == 0:
             print('   potential       {0:s}'.format(infp['potential']))
@@ -156,7 +156,7 @@ def write_info(infp,args):
         raise
 
     fmethod = infp['opt_method']
-    print('   opt_method  {0:s}'.format(fmethod))
+    print('   opt_method        {0:s}'.format(fmethod))
     if fmethod in ('cs','CS'):
         print('   num_individuals   {0:d}'.format(infp['num_individuals']))
         print('   fraction          {0:7.4f}'.format(infp['cs_fraction']))

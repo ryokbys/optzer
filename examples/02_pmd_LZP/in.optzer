@@ -12,3 +12,4 @@ tpe_nsmpl_prior    10
 
 update_vrange        10
 fval_upper_limit     100.0
+criterion         0.01
