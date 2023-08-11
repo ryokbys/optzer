@@ -1,0 +1,37 @@
+[tool.setuptools]
+packages = ["optzer"]
+
+
+[project]
+name = "optzer"
+version = "0.2.7"
+description = "This program optimizes parameters in any external programs to any target propety."
+readme = "README.md"
+requires-python = ">=3.8"
+license = {file = "LICENSE"}
+authors = [
+	{name = "Ryo KOBAYASHI", email = "ryo.kbys@gmail.com"}
+]
+maintainers = [
+	{name = "Ryo KOBAYASHI", email = "ryo.kbys@gmail.com"}
+]
+
+dependencies = [
+	"numpy", "docopt", "scipy", "multiprocess",
+]
+
+# dynamic = ["version", "description"]
+
+[project.urls]
+Homepage = "https://github.com/ryokbys/optzer"
+Documentation = "http://ryokbys.web.nitech.ac.jp/contents/optzer_doc/"
+Repository = "https://github.com/ryokbys/optzer"
+
+[project.scripts]
+optzer = "optzer.main:main"
+optzer-out2md = "optzer.out2md:main"
+optzer-out2prms = "optzer.out2prms:main"
+optzer-get-best = "optzer.get_best:main"
+optzer-db2csv = "optzer.db2csv:main"
+optzer-db2prms = "optzer.db2prms:main"
+

@@ -1,5 +1,3 @@
-max_num_neighbors         200
-
 time_interval              2.0
 num_iteration            10000
 min_iteration               5
