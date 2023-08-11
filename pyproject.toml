@@ -4,7 +4,7 @@ packages = ["optzer"]
 
 [project]
 name = "optzer"
-version = "0.2.7"
+version = "0.2.8"
 description = "This program optimizes parameters in any external programs to any target propety."
 readme = "README.md"
 requires-python = ">=3.8"
