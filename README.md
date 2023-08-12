@@ -4,7 +4,7 @@
 
 # Who made this?
 * [Ryo KOBAYASHI](http://ryokbys.web.nitech.ac.jp/index.html)
-* Assistant Professor at Department of Physical Science and Engineering, Nagoya Institute of Technology.
+* Associate Professor at Department of Physical Science and Engineering, Nagoya Institute of Technology.
 
 # Requirements and dependencies
 
