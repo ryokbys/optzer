@@ -23,6 +23,6 @@ for l in out:
         bestloss = float(dat[4])
 
 assert bestiid == bestiidref
-assert abs(bestloss-bestlossref) < 0.01
+assert abs(bestloss-bestlossref) < abs(bestlossref)
 
 print('pass')

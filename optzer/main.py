@@ -124,7 +124,7 @@ def get_data(basedir,prefix=None,**kwargs):
             fname = basedir+'/data.{0:s}.{1:s}'.format(prefix,t)
         else:  # not known about prefix
             files = glob.glob(basedir+f'/data.*.{t:s}')
-            fname = files[0]  # assume 1st one as the generated data, which could be wrong
+            fname = files[0]  # Assume 1st one as the generated data, which could be wrong
         # print('m,fname=',m,fname)
         try:
             data[t] = read_data(fname,)
