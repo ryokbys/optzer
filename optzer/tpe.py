@@ -22,7 +22,7 @@ from optzer.individual import Individual, ind_from_db, update_slims
 from optzer.io import write_db_optzer, read_db_optzer
 
 __author__ = "RYO KOBAYASHI"
-__version__ = "221228"
+__version__ = "230913"
 
 _fname_db = 'db.optzer.json'
 
@@ -38,7 +38,9 @@ class TPE:
     """
 
     def __init__(self, nbatch, vnames, vs0, slims, hlims, loss_func,
-                 write_func=None, seed=42, criterion=-1.0,
+                 write_func=None, seed=42,
+                 loss_criteria=-1.0,
+                 stuck_criteria=-1,
                  **kwargs):
         """
         Conctructor of TPE class.
@@ -56,9 +58,12 @@ class TPE:
               Loss function to be minimized with variables and **kwargs.
           write_func : function
               Function for outputing some info.
-          criterion: float
+          loss_criteria: float
               Convergence criterion for the loss.
               If negtive (default), not to set criterion.
+          stuck_criteria: int
+              Convergence criteria for number of generation within which the loss is not improved. 
+              If negtive (default), not to set the criteria.
         """
         if nbatch < 1:
             raise ValueError('nbatch must be > 0.')
@@ -76,7 +81,9 @@ class TPE:
             self.vlogs = kwargs['vlogs']
         self.loss_func = loss_func
         self.write_func = write_func
-        self.criterion = criterion
+        self.loss_criteria = loss_criteria
+        self.stuck_criteria = stuck_criteria
+        self.num_loss_stuck = 0
         self.kwargs = kwargs
         self.best_pnt = None
         self.print_level = 0
@@ -243,14 +250,15 @@ class TPE:
         if self.print_level > 0:
             self._write_step_info(self.igen0,starttime)
 
-        if self.criterion > 0.0:
-            if self.bestsmpl.loss < self.criterion:
-                print(' Convergence achieved since the best loss < criterion.\n'
+        if self.loss_criteria > 0.0:
+            if self.bestsmpl.loss < self.loss_criteria:
+                print(' Convergence achieved since the best loss < loss_criteria.\n'
                       +'   Best loss and criterion = '
                       +'{0:.3f}  {1:.3f}'.format(self.bestsmpl.loss,
-                                                 self.criterion))
+                                                 self.loss_criteria))
                 return None
 
+        self.num_loss_stuck = 0
         #...TPE loop starts
         for igen in range(self.igen0+1, self.igen0+1+maxstp):
             #...Create candidates by either random or TPE
@@ -310,18 +318,26 @@ class TPE:
                 self.write_variables(self.bestsmpl,
                                      fname='in.vars.optzer.best',
                                      **self.kwargs)
+                self.num_loss_stuck = 0
+            else:
+                self.num_loss_stuck += 1
 
             #...Write info
             if self.print_level > 0:
                 self._write_step_info(igen,starttime)
             
-            if self.criterion > 0.0:
-                if self.bestsmpl.loss < self.criterion:
-                    print(' Convergence achieved since the best loss < criterion.\n'
+            if self.loss_criteria > 0.0:
+                if self.bestsmpl.loss < self.loss_criteria:
+                    print(' Convergence achieved since the best loss < loss_criteria.\n'
                           +'   Best loss and criterion = '
                           +'{0:.3f}  {1:.3f}'.format(self.bestsmpl.loss,
-                                                     self.criterion))
+                                                     self.loss_criteria))
                     return None
+            if self.stuck_criteria > 0 and \
+               self.num_loss_stuck > self.stuck_criteria:
+                print(' Convergence achieved since the num of consecutive generations with no improvement'
+                      +' exceeds <stuck_criteria> = {0:d}.\n'.format(self.stuck_criteria))
+                return None
 
         pool.close()
         print(' Finished since it exceeds the max iteration')

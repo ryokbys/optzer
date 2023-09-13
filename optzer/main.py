@@ -37,6 +37,9 @@ from optzer.io import read_in_optzer, write_info, write_vars_optzer, \
 from optzer.cs import CS
 from optzer.tpe import TPE
 
+__author__ = "RYO KOBAYASHI"
+__version__ = "230913"
+
 _infname = 'in.optzer'
 
 class Optzer:

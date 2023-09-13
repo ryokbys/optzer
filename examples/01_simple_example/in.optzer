@@ -14,6 +14,7 @@ cs_fraction       0.25
 #...Decreasing temperature in WPE
 # temperature     10.0  1.0
 
-# criterion          0.025
 update_vrange        10
 fval_upper_limit     100.0
+# loss_criteria        0.025
+# stuck_criteria       10

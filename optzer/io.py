@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 
 __author__ = "RYO KOBAYASHI"
-__version__ = "221227"
+__version__ = "230913"
 
 def read_in_optzer(fname='in.optzer'):
     #...initialize
@@ -31,7 +31,7 @@ def read_in_optzer(fname='in.optzer'):
         if len(data) == 0:
             mode = None
             continue
-        if data[0] == 'num_iteration':
+        if data[0] in ('num_iteration','num_generation'):
             maxiter = int(data[1])
             infp['num_iteration'] = maxiter
             mode = None
@@ -80,8 +80,11 @@ def read_in_optzer(fname='in.optzer'):
         elif data[0] == 'update_vrange':
             infp['update_vrange'] = int(data[1])
             mode = None
-        elif data[0] == 'criterion':
-            infp['criterion'] = float(data[1])
+        elif data[0] in ('loss_criteria','loss_criterion'):
+            infp['loss_criteria'] = float(data[1])
+            mode = None
+        elif data[0] in ('stuck_criteria','stuck_criterion'):
+            infp['stuck_criteria'] = int(data[1])
             mode = None
         elif data[0] == 'temperature':
             infp['temperature'] = float(data[1])

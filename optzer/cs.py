@@ -31,7 +31,7 @@ from optzer.testfunc import testfunc, write_vars_for_testfunc
 from optzer.io import write_db_optzer, read_db_optzer
 
 __author__ = "RYO KOBAYASHI"
-__version__ = "221227"
+__version__ = "230913"
 
 _fname_gen = 'out.cs.generations'
 _fname_ind = 'out.cs.individuals'
@@ -52,7 +52,8 @@ class CS:
 
     def __init__(self, nind, frac, vnames, vs0, slims,
                  hlims, loss_func, write_func=None,
-                 nproc=0, seed=42, criterion=-1.0, **kwargs):
+                 nproc=0, seed=42, loss_criteria=-1.0,
+                 stuck_criteria=-1, **kwargs):
         """
         Conctructor of CS class.
 
@@ -68,8 +69,11 @@ class CS:
             Initial guess of variables.
         slims,hlims: dict
             Set of variables with names.
-        criterion: float
-            Convergence criterion for the loss. If negtive (default), not to set criterion.
+        loss_criteria: float
+            Convergence criteria for the loss. If negtive (default), not to set the criteria.
+        stuck_criteria: int
+            Convergence criteria for number of generation within which the loss is not improved. 
+            If negtive (default), not to set the criteria.
         """
         if nind < 2:
             raise ValueError('nind must be greater than 1 in CS!')
@@ -87,7 +91,9 @@ class CS:
             self.vws[k] = max(self.slims[k][1] -self.slims[k][0], 0.0)
         self.loss_func = loss_func
         self.write_func = write_func
-        self.criterion = criterion
+        self.loss_criteria = loss_criteria
+        self.stuck_criteria = stuck_criteria
+        self.num_loss_stuck = 0
         self.kwargs = kwargs
         self.bestind = None
         self.print_level = 0
@@ -233,14 +239,15 @@ class CS:
         if self.print_level > 0:
             self._write_step_info( self.igen0, starttime)
 
-        if self.criterion > 0.0:
-            if self.bestind.loss < self.criterion:
+        if self.loss_criteria > 0.0:
+            if self.bestind.loss < self.loss_criteria:
                 print(' Convergence achieved since the best loss < criterion.\n'
                       +'   Best loss and criterion = '
                       +'{0:.3f}  {1:.3f}'.format(self.bestind.loss,
-                                                 self.criterion))
+                                                 self.loss_criteria))
                 return None
 
+        self.num_loss_stuck = 0
         for igen in range(self.igen0+1, self.igen0+1+max_gen):
             self.sort_individuals()
             #...Create candidates from current population using Levy flight
@@ -345,14 +352,22 @@ class CS:
                 self.write_variables(self.bestind,
                                      fname='in.vars.optzer.best',
                                      **self.kwargs)
+                self.num_loss_stuck = 0
+            else:
+                self.num_loss_stuck += 1
 
-            if self.criterion > 0.0:
-                if self.bestind.loss < self.criterion:
-                    print(' Convergence achieved since the best loss < criterion.\n'
-                          +'   Best loss and criterion = '
-                          +'{0:.3f}  {1:.3f}'.format(self.bestind.loss,
-                                                     self.criterion))
-                    return None
+            if self.loss_criteria > 0.0 and \
+               self.bestind.loss < self.loss_criteria:
+                print(' Convergence achieved since the best loss < loss_criteria.\n'
+                      +'   Best loss and criterion = '
+                      +'{0:.3f}  {1:.3f}'.format(self.bestind.loss,
+                                                 self.loss_criteria))
+                return None
+            if self.stuck_criteria > 0 and \
+               self.num_loss_stuck > self.stuck_criteria:
+                print(' Convergence achieved since the num of consecutive generations with no improvement'
+                      +' exceeds <stuck_criteria> = {0:d}.\n'.format(self.stuck_criteria))
+                return None
             
             #...Update variable ranges if needed
             if self.update_slims_per > 0 and igen != 0 and \
