@@ -155,7 +155,9 @@ def loss_func(tdata,eps=1.0e-8,**kwargs):
         trial = tdata[name]
         if trial == None:
             losses[name] = misval
-            L += losses[name] *wgt
+            # L += losses[name] *wgt
+            losses[name] *= wgt
+            L += losses[name]
             continue
         num = ref['ndat']
         refd = ref['data']
@@ -201,8 +203,10 @@ def loss_func(tdata,eps=1.0e-8,**kwargs):
                     raise ValueError('lower is greater than upper in subject_to ',pid)
                 if not (lower < td[pid] < upper):
                     losses[name] += penalty
-
-        L += losses[name] *wgt
+        
+        #L += losses[name] *wgt
+        losses[name] *= wgt
+        L += losses[name]
         
     if kwargs['print_level'] > 0:
         print('   iid,losses= {0:8d}'.format(kwargs['iid']),end='')
@@ -210,7 +214,7 @@ def loss_func(tdata,eps=1.0e-8,**kwargs):
             loss = losses[k]
             print(' {0:10.4f}'.format(loss),end='')
         print(' {0:11.5f}'.format(L),flush=True)
-    return L
+    return L, losses
 
 def func_wrapper(variables, **kwargs):
     """

@@ -226,8 +226,9 @@ class TPE:
 
         results = [ res.get() for res in prcs ]
         for res in results:
-            loss, i = res
+            loss, losses, i = res
             self.candidates[i].loss = loss
+            self.candidates[i].losses = losses
             self.candidates[i].gen = self.igen0
         db_add = [ ci.to_DataFrame() for ci in self.candidates ]
         self.history_db = pd.concat([self.history_db] +db_add)
@@ -293,8 +294,9 @@ class TPE:
 
             results = [ res.get() for res in prcs ]
             for res in results:
-                loss, i = res
+                loss, losses, i = res
                 self.candidates[i].loss = loss
+                self.candidates[i].losses = losses
                 self.candidates[i].gen = igen
             db_add = [ c.to_DataFrame() for c in self.candidates ]
             self.history_db = pd.concat([self.history_db] +db_add)

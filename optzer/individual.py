@@ -88,6 +88,7 @@ class Individual:
         self.vs = { k:0.0 for k in vnames }
         self.gen = gen
         self.loss = None
+        self.losses = []
         return None
 
     def set_variables(self,variables,slims):
@@ -97,6 +98,7 @@ class Individual:
         self.vs = variables
         self.wrap(slims)
         self.loss = None
+        self.losses = []
         return None
 
     def init_random(self, slims):
@@ -106,6 +108,7 @@ class Individual:
             self.vs[key] = v
         self.wrap(slims)
         self.loss = None
+        self.losses = []
         return None
 
     def wrap(self, slims):
@@ -127,14 +130,15 @@ class Individual:
             for k in vs.keys():
                 if vlogs[k]:
                     vs[k] = np.exp(vs[k])
-        self.loss = loss_func(vs, **kwargs)
-        return self.loss, kwargs['index']
+        self.loss, self.losses = loss_func(vs, **kwargs)
+        return self.loss, self.losses, kwargs['index']
 
     def to_DataFrame(self):
         """Return a pandas DataFrame of this individual."""
         data = {}
         data['iid'] = [self.iid]
         data['loss'] = [self.loss]
+        data['losses'] = [self.losses]
         data['gen'] = [self.gen]
         for k in self.vnames:
             data[k] = [self.vs[k]]

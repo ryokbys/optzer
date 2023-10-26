@@ -223,8 +223,9 @@ class CS:
             prcs.append(pool.apply_async(ind.calc, (self.loss_func,kwtmp,)))
         results = [ res.get() for res in prcs ]
         for res in results:
-            loss,ip = res
+            loss,losses,ip = res
             self.population[ip].loss = loss
+            self.population[ip].losses = losses
             self.population[ip].gen = self.igen0
 
         self.keep_best()
@@ -302,15 +303,17 @@ class CS:
             rnd_results = [ res.get() for res in rnd_prcs ]
 
             for res in results:
-                loss,ic = res
+                loss,losses,ic = res
                 candidates[ic].loss = loss
+                candidates[ic].losses = losses
                 candidates[ic].gen = igen
             db_add = [ c.to_DataFrame() for c in candidates ] 
 
             for res in rnd_results:
-                loss,ic_rnd = res
+                loss,losses,ic_rnd = res
                 ic = ic_rnd -len(candidates)
                 rnd_candidates[ic].loss = loss
+                rnd_candidates[ic].losses = losses
                 rnd_candidates[ic].gen = igen
             db_add.extend([ c.to_DataFrame() for c in rnd_candidates ])
             self.history_db = pd.concat([self.history_db] +db_add)
