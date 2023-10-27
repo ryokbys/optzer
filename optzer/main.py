@@ -263,7 +263,7 @@ def func_wrapper(variables, **kwargs):
         cmd = prefix +" ./{0:s} > log.iid_{1:d}".format(subjobscript,iid)
         subprocess.run(cmd,shell=True,check=True,timeout=timeout)
         optdata = get_data('.',**kwargs)
-        L = loss_func(optdata,**kwargs)
+        L,losses = loss_func(optdata,**kwargs)
 
     except Exception as e:
         if print_level > 0:
@@ -272,7 +272,12 @@ def func_wrapper(variables, **kwargs):
                   flush=True)
         os.chdir(cwd)
         subjob_done = False
-        L = L_up_lim
+        losses = {}
+        L = 0.0
+        for name in refdata.keys():
+            losses[name] = L_up_lim
+            L += L_up_lim
+
 
     if subjob_done:
         try:
@@ -298,7 +303,7 @@ def func_wrapper(variables, **kwargs):
                 print('    Error: ', e)
             pass
         
-    return L
+    return L,losses
     
 def main():
 
