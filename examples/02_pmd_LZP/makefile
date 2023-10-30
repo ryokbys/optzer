@@ -22,4 +22,4 @@ test: init
 resdir := result_$(shell date "+%y%m%d_%H%M")
 keep:
 	mkdir -p $(resdir)
-	cp -R in.* out.* data.* best_data $(resdir)/
+	cp -R in.* out.* data.* db.* best_data $(resdir)/
