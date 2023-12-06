@@ -47,18 +47,18 @@ def main():
         txt += f'Extracted iid = {iid:d}\n\n'
     else:
         txt += f'Best iid = {bestiid:d}\n\n'
-    txt += f'|  Target  |  Weight |  Loss  | Weight x Loss |\n'
-    txt +=  '|----------|---------|--------|---------------|\n'
+    txt += f'|  Target  |  Weight |  Loss  |\n'
+    txt +=  '|----------|---------|--------|\n'
     for i in range(len(targets)):
         t = targets[i]
         if t != 'total':
             w = weights[i]
             l = losses[iid][i]
             wxl = wxls[i]
-            txt += f'|  {t:s}  |  {w:5.3f}  |  {l:.4f}  |  {wxl:.4f}  |\n'
+            txt += f'|  {t:s}  |  {w:5.3f}  |  {l:.4f}  |\n'
         else:
             l = losses[iid][i]
-            txt += f'|  {t:s}  |  -----  |  -----  |  {l:.4f}  |\n'
+            txt += f'|  {t:s}  |  -----  | {l:.4f}  |\n'
     print(txt)
     
     return None

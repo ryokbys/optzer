@@ -316,6 +316,7 @@ def read_data(fname,):
                         options[k] = v
             continue
         ldat = line.split()
+        if len(ldat) == 0: continue
         if ndat < 1:
             ndat = int(ldat[0])
             wdat = float(ldat[1])

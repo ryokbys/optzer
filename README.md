@@ -26,7 +26,7 @@ You can install as a develop mode installation as,
 ```shell
 git clone https://github.com/ryo.kbys/optzer.git ./optzer
 cd optzer
-python setup.py sdist
+python -m build
 pip install -e .
 ```
 

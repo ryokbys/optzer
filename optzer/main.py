@@ -135,7 +135,7 @@ def get_data(basedir,prefix=None,**kwargs):
             data[t] = None
             pass
         if prefix == 'ref':
-            print('  {0:>15s}  {1:.3f}'.format(t,data[t]['wdat']))
+            print('  {0:>20s}  {1:.3f}'.format(t,data[t]['wdat']))
     return data
 
 def loss_func(tdata,eps=1.0e-8,**kwargs):
