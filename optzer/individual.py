@@ -3,7 +3,7 @@ import copy
 import pandas as pd
 
 __author__ = "RYO KOBAYASHI"
-__version__ = "221227"
+__revision__ = "221227"
 
 def ind_from_db(db,idx,vnames,slims):
     """Extract an individual from an index of the DB.
@@ -101,6 +101,12 @@ class Individual:
         self.losses = []
         return None
 
+    def get_variables(self,):
+        vs = []
+        for i,vn in enumerate(self.vnames):
+            vs.append(self.vs[vn])
+        return np.array(vs)
+    
     def init_random(self, slims):
         for key in self.vnames:
             vmin, vmax = slims[key]

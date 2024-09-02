@@ -36,9 +36,10 @@ from optzer.io import read_in_optzer, write_info, write_vars_optzer, \
     read_vars_optzer, read_data
 from optzer.cs import CS
 from optzer.tpe import TPE
+from optzer.ingo import INGO
 
 __author__ = "RYO KOBAYASHI"
-__version__ = "230913"
+__revision__ = "240902"
 
 _infname = 'in.optzer'
 
@@ -49,6 +50,8 @@ class Optzer:
         self.nproc = nproc
         self.seed = seed
         self.vnames = vnames
+
+        np.set_printoptions(precision=3, floatmode='fixed')
         return None
 
     def set_variables(self, variables, slims=None, hlims=None):
@@ -104,6 +107,14 @@ class Optzer:
                       self.slims, self.hlims, loss_func,
                       write_func=write_func,
                       seed=self.seed, **kwargs)
+        elif kwargs['opt_method'] in ('ingo','INGO',
+                                      'fastingo','fastINGO'):
+            nbatch = kwargs['num_individuals']
+            opt = INGO(nbatch, self.vnames, self.vs,
+                       self.slims, self.hlims, loss_func,
+                       write_func=write_func,
+                       nproc=self.nproc,
+                       seed=self.seed, **kwargs)
         
         opt.run(num_iteration)
         return None
@@ -315,9 +326,9 @@ def main():
     seed = int(args['--random-seed'])
     if seed < 0:
         seed = int(start)
-        print(f' Random seed was set from the current time: {seed:d}')
+        print(f' Random seed was set from the current time as, {seed:d}')
     else:
-        print(f' Random seed was given: {seed:d}')
+        print(f' Random seed was given as, {seed:d}')
     
     infp = read_in_optzer(_infname)
     write_info(infp,args)

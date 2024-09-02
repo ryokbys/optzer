@@ -31,10 +31,8 @@ from optzer.testfunc import testfunc, write_vars_for_testfunc
 from optzer.io import write_db_optzer, read_db_optzer
 
 __author__ = "RYO KOBAYASHI"
-__version__ = "230913"
+__revision__ = "230913"
 
-_fname_gen = 'out.cs.generations'
-_fname_ind = 'out.cs.individuals'
 _fname_db = 'db.optzer.json'
 
 def test_DB_vs_vnames(db, vnames):

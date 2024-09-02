@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 
 __author__ = "RYO KOBAYASHI"
-__version__ = "230913"
+__revision__ = "230913"
 
 def read_in_optzer(fname='in.optzer'):
     #...initialize
@@ -60,7 +60,9 @@ def read_in_optzer(fname='in.optzer'):
             for i in range(1,len(data)):
                 infp['target'].append(data[i])
             mode = None
-        elif data[0] == 'num_individuals' or data[0] == 'num_trials':
+        elif data[0] == 'num_individuals' \
+             or data[0] == 'num_trials' \
+             or data[0] == 'num_batch':
             nind = int(data[1])
             infp['num_individuals'] = nind
             mode = None
@@ -92,6 +94,10 @@ def read_in_optzer(fname='in.optzer'):
                 infp['initial_temperature'] = float(data[1])
                 infp['final_temperature'] = float(data[2])
             mode = None
+        elif data[0] == 'log_vars':
+            infp['vlogs'] = []
+            for i in range(1,len(data)):
+                infp['vlogs'].append(data[i])
         else:
             mode = None
             pass
@@ -165,6 +171,8 @@ def write_info(infp,args):
         print('   fraction          {0:7.4f}'.format(infp['cs_fraction']))
     elif fmethod in ('tpe','TPE','wpe','WPE'):
         pass
+    elif fmethod in ('ingo','INGO','fastingo','fastINGO'):
+        print(f'   num_batch         {infp["num_individuals"]}')
     else:
         print('   There is no such opt_method...')
     if infp['criterion'] > 0.0:

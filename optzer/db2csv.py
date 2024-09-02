@@ -36,6 +36,8 @@ def write_db_csv(db,fname='out.db.csv'):
                                                       int(row['gen']),
                                                       row['loss']))
             for c in cols:
+                if c == 'losses':
+                    continue
                 f.write(f' {row[c]:11.3e}')
             f.write('\n')
     return None

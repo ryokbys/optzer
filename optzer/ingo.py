@@ -1,16 +1,24 @@
 #!/usr/bin/env python
 """
-Tree-based Parzen Estimator (TPE).
+Implicit Natural Gradient Optimization (INGO).
+See,  Y. Lyu, and I.W. Tsang, “Black-box optimizer with implicit natural gradient,” arXiv [Cs.LG], (2019).
 
 Usage:
   {0:s} [options]
 
 Options:
   -h, --help  Show this message and exit.
+  -n N        Number of samples in INGO. [default: 20]
+  --print-level LEVEL
+              Print verbose level. [default: 1]
+  --algorithm ALGO
+              Which variant of INGO algorithm to use.
+              normal, step, or fast. [default: normal]
 """
 import os, sys
 from docopt import docopt
 import numpy as np
+import scipy
 import random
 import copy
 #from multiprocessing import Process, Pool
@@ -22,23 +30,23 @@ from optzer.individual import Individual, ind_from_db, update_slims
 from optzer.io import write_db_optzer, read_db_optzer
 
 __author__ = "RYO KOBAYASHI"
-__version__ = "230913"
+__revision__ = "240831"
 
 _fname_db = 'db.optzer.json'
 
 def gauss_kernel(x):
     return np.exp(-0.5*x*x)/np.sqrt(2.0*np.pi)
 
-class TPE:
+class INGO:
     """
-    Class for Tree-based Parzen Estimator (TPE) or Weighted Parzen Estimator (WPE).
+    Class for Implicit Natural Gradient Optimization (INGO).
     
     Refs:
-      1. Bergstra, J., Bardenet, R., Bengio, Y. & Kégl, B.  in Proc. NIPS-24th, 2546–2554
+      1. Y. Lyu, and I.W. Tsang, “Black-box optimizer with implicit natural gradient,” arXiv [Cs.LG], (2019).
     """
 
     def __init__(self, nbatch, vnames, vs0, slims, hlims, loss_func,
-                 write_func=None, seed=42,
+                 write_func=None, seed=42, nproc=1,
                  loss_criteria=-1.0,
                  stuck_criteria=-1,
                  **kwargs):
@@ -56,6 +64,8 @@ class TPE:
               Hard limits of variables, which are fixed during TPE iterations. 
           loss_func : function
               Loss function to be minimized with variables and **kwargs.
+          nproc : int
+              Number of processes.
           write_func : function
               Function for outputing some info.
           loss_criteria: float
@@ -65,12 +75,13 @@ class TPE:
               Convergence criteria for number of generation within which the loss is not improved. 
               If negtive (default), not to set the criteria.
         """
-        if nbatch < 1:
-            raise ValueError('nbatch must be > 0.')
         np.random.seed(seed)
         random.seed(seed)
         self.nbatch = nbatch
+        self.nproc = nproc
         self.ndim = len(vs0)
+        if self.nbatch <= self.ndim:
+            raise ValueError(f'nbatch should be >= {self.ndim+1:d}.')
         self.vnames = vnames
         self.vs0 = vs0
         self.hlims = hlims
@@ -87,36 +98,23 @@ class TPE:
         self.kwargs = kwargs
         self.best_pnt = None
         self.print_level = 0
-        self.nsmpl_prior = 100
-        self.ntrial = 100
         self.method = kwargs['opt_method']
 
-        self.gamma = 0.15
+        self.beta = 1.0/self.ndim
         #...Change default values if specified
         if 'print_level' in kwargs.keys():
             self.print_level = int(kwargs['print_level'])
-        if 'tpe_nsmpl_prior' in kwargs.keys():
-            self.nsmpl_prior = int(kwargs['tpe_nsmpl_prior'])
-        if 'tpe_ntrial' in kwargs.keys():
-            self.ntrial = int(kwargs['tpe_ntrial'])
-        if 'tpe_gamma' in kwargs.keys():
-            self.gamma = float(kwargs['tpe_gamma'])
 
-        if self.gamma < 0.0 or self.gamma > 1.0:
-            raise ValueError('gamma must be within 0. and 1., whereas gamma = ',self.gamma)
+        # #...Write info
+        # print('')
+        # if self.method in ('ingo','INGO'):
+        #     print(' {0:s} information:'.format(self.method))
 
-        #...Write info
-        print('')
-        if self.method in ('wpe','WPE'):
-            print(' {0:s} information:'.format(self.method))
-            print(f'   Num of prior samples = {self.nsmpl_prior:d}')
-            print(f'   Num of top samples used for density estimation = {self.ntrial:d}')
-        elif self.method in ('tpe','TPE'):
-            print(' {0:s} information:'.format(self.method))
-            print(f'   Num of prior samples = {self.nsmpl_prior:d}')
-            print(f'   Num of trials for sampling = {self.ntrial:d}')
-            print(f'   Gamma for dividing high and low = {self.gamma:4.2f}')
-        print('')
+        # elif self.method in ('fastingo','fastINGO'):
+        #     print(' {0:s} information:'.format(self.method))
+        #     self.beta = 1.0 / np.sqrt(self.ndim)
+
+        # print('')
     
         #...Change vrange if log domain
         for k,v in self.vlogs.items():
@@ -165,9 +163,9 @@ class TPE:
             self.bestsmpl = ind_from_db(self.history_db,
                                         bestidx,
                                         self.vnames, self.slims)
-            self.slims = update_slims(self.slims, self.hlims,
-                                      self.history_db,
-                                      ntops=max(100,int(len(self.history_db)*self.gamma)))
+            # self.slims = update_slims(self.slims, self.hlims,
+            #                           self.history_db,
+            #                           ntops=max(100,int(len(self.history_db)*self.gamma)))
             #...Generate random population with the updated slims
             self.iidinc = self.history_db.iid.max() +1
             self.igen0 = self.history_db.gen.max() +1
@@ -177,6 +175,17 @@ class TPE:
                 self.candidates.append(ind)
                 self.iidinc += 1
             
+        #...Compute mean and covariant matrix of the samples
+        Xmat = np.zeros((self.nbatch, self.ndim))
+        for i in range(self.nbatch):
+            ci = self.candidates[i]
+            vi = ci.get_variables()
+            Xmat[i,:] = vi[:]
+        self.mean = np.mean(Xmat, axis=0)
+        self.cov = np.cov(Xmat, rowvar=False)
+        if self.method in ('fastingo', 'fastINGO'):
+            self.cov = diag_only(self.cov)
+        import json
         return None
 
     def keep_best(self):
@@ -199,25 +208,18 @@ class TPE:
 
         starttime = time()
 
-        #...Whether of not kwargs contains 'temperature'...
-        if 'initial_temperature' in self.kwargs.keys():
-            tini = self.kwargs['initial_temperature']
-            tfin = self.kwargs['final_temperature']
-            self.kwargs['temperature'] = tini
-            dtemp = (tfin -tini) /max(maxstp,1)
-            print('   Initial,final,delta temperatures = '
-                  + f'{tini:.1f}  {tfin:.1f}  {dtemp:.3f}')
-            print('',flush=True)
-        elif 'temperature' in self.kwargs.keys():
-            print('   Temperature = {0:.1f}'.format(self.kwargs['temperature']))
-            print('',flush=True)
-            
         #...Create pool before going into maxstp-loop,
         #...since creating pool inside could cause "Too many files" error.
-        pool = Pool(processes=self.nbatch)
-
-        #...Evaluate sample losses of initial sets
         prcs = []
+        if self.nproc > 1:
+            pool = Pool(processes=self.nproc)
+        else:
+            pool = Pool()
+
+        #...Sanity check before calc loss
+        self._sanity_check()
+            
+        #...Evaluate sample losses of initial sets
         for i,ci in enumerate(self.candidates):
             kwtmp = copy.copy(self.kwargs)
             kwtmp['index'] = i
@@ -238,9 +240,12 @@ class TPE:
         #...Dump the DB once it is updated.
         write_db_optzer(self.history_db,fname=_fname_db)
 
-        self.slims = update_slims(self.slims, self.hlims,
-                                  self.history_db,
-                                  ntops=max(100,int(len(self.history_db)*self.gamma)))
+        #...report after calc loss
+        self._report()
+
+        # self.slims = update_slims(self.slims, self.hlims,
+        #                           self.history_db,
+        #                           ntops=max(100,int(len(self.history_db)*self.gamma)))
         
         #...Check best
         self.keep_best()
@@ -259,31 +264,23 @@ class TPE:
                                                  self.loss_criteria))
                 return None
 
+        # #...Set var mean as the best one
+        # self.mean[:] = self.bestsmpl.get_variables()[:]
+            
         self.num_loss_stuck = 0
-        #...TPE loop starts
+        #...INGO loop starts
         for igen in range(self.igen0+1, self.igen0+1+maxstp):
-            #...Create candidates by either random or TPE
-            if len(self.history_db) <= self.nsmpl_prior:
-                #...Create random candidates
-                self.candidates = []
-                for i in range(self.nbatch):
-                    self.iidinc += 1
-                    newsmpl = Individual(self.iidinc, self.vnames)
-                    newsmpl.init_random(self.slims)
-                    self.candidates.append(newsmpl)
+            #...Create candidates
+            if self.method in ('fastingo','fastINGO'):
+                #...Create candidates by fastINGO
+                self.candidates = self._candidates_by_fastINGO()
             else:
-                if self.method in ('wpe,''WPE'):
-                    temp = 1.0
-                    if 'temperature' in self.kwargs.keys():
-                        temp = self.kwargs['temperature']
-                    #...Create candidates by WPE
-                    self.candidates = self._candidates_by_WPE(temperature=temp)
-                    if 'initial_temperature' in self.kwargs.keys():
-                        self.kwargs['temperature'] += dtemp
-                else:
-                    #...Create candidates by TPE
-                    self.candidates = self._candidates_by_TPE()
+                #...Create candidates by normal INGO
+                self.candidates = self._candidates_by_INGO()
 
+            #...Sanity check before calc loss
+            self._sanity_check()
+            
             #...Evaluate sample losses
             prcs = []
             for i,ci in enumerate(self.candidates):
@@ -306,9 +303,12 @@ class TPE:
             #...Dump the DB once it is updated.
             write_db_optzer(self.history_db,fname=_fname_db)
 
-            self.slims = update_slims(self.slims, self.hlims,
-                                      self.history_db,
-                                      ntops=max(100,int(len(self.history_db)*self.gamma)))
+            #...report after calc loss
+            self._report()
+
+            # self.slims = update_slims(self.slims, self.hlims,
+            #                           self.history_db,
+            #                           ntops=max(100,int(len(self.history_db)*self.gamma)))
 
             #...Check best
             best_updated = False
@@ -361,169 +361,181 @@ class TPE:
         print('', flush=True)
         return None
 
-    def _candidates_by_TPE(self,):
+    def _candidates_by_INGO(self, ):
         """
-        Create candidates by using TPE.
+        Create candidates by the INGO normal algorithm.
         """
-        losses = self.history_db.loss
-        nlow = int(self.gamma *len(losses))
-        nhigh = len(losses) -nlow
-        argpart = np.argpartition(losses,nlow)
-        argsrt = np.argsort(losses)
-        Xlow = np.zeros((nlow,self.ndim))
-        Xhigh = np.zeros((nhigh,self.ndim))
-        for i in range(nlow):
-            #idx = argpart[i]
-            idx = argsrt[i]
-            vs = ind_from_db(self.history_db,idx,self.vnames,self.slims).vs
-            for j,k in enumerate(self.vnames):
-                Xlow[i,j] = vs[k]
-        for i in range(nhigh):
-            #idx = argpart[nlow+i]
-            idx = argsrt[nlow+i]
-            vs = ind_from_db(self.history_db,idx,self.vnames,self.slims).vs
-            for j,k in enumerate(self.vnames):
-                Xhigh[i,j] = vs[k]
-        
+        N = self.nbatch
+        losses = np.zeros(len(self.candidates))
+        xs = np.zeros((len(losses),self.ndim))
+        for i, ci in enumerate(self.candidates):
+            losses[i] = ci.loss
+            for j,vn in enumerate(ci.vnames):
+                xs[i,j] = ci.vs[vn]
 
-        #...Sampling variable candidates
-        xcandidates = np.empty((self.nbatch,self.ndim))
-        ntrial = max(self.ntrial,self.nbatch)
-        # print('')
-        for idim in range(self.ndim):
-            # print('idim = ',idim)
-            key = self.vnames[idim]
-            # xhmin = self.hlims[key][0]
-            # xhmax = self.hlims[key][1]
-            xhmin = self.slims[key][0]
-            xhmax = self.slims[key][1]
-            xlowsrt = np.sort(Xlow[:,idim])
-            npnt = len(xlowsrt)
-            #...Determine smoothness parameter, h, by Silverman's method
-            q75, q25 = np.percentile(xlowsrt, [75,25])
-            std = np.std(xlowsrt)
-            sgm = min(std, (q75-q25)/1.34)
-            h = 1.06 *sgm /np.power(npnt, 1.0/5)
-            # print(f'  q25,q75,std,sgm,h= {q25:.3f}, {q75:3f},'
-            #       +f' {std:.3f}, {sgm:.3f}, {h:.3f}')
-            # print('  xlowsrt=',xlowsrt)
-            #...Prepare for g(x)
-            xhighsrt = Xhigh[:,idim]
-            q75, q25 = np.percentile(xhighsrt, [75,25])
-            sgmh = min(np.std(xhighsrt), (q75-q25)/1.34)
-            hh = 1.06 *sgmh /np.power(len(xhighsrt),1.0/5)
-            # print(f'  q25,q75,sgmh,hh= {q25:.3f}, {q75:3f},'
-            #       +f' {sgmh:.3f}, {hh:.3f}')
-            #...Several trials for selection
-            aquisition = np.zeros(ntrial)
-            xs = np.empty(ntrial)
-            for itry in range(ntrial):
-                ipnt = int(np.random.random()*npnt)
-                xi = xlowsrt[ipnt]
-                r = h *np.sqrt(-2.0*np.log(np.random.random()))
-                th = 2.0 *np.pi *np.random.random()
-                x = xi + r*np.cos(th)
-                #...Wrap by vranges
-                x = min(max(x,xhmin),xhmax)
-                xs[itry] = x
-                #...Compute l(x) and g(x)
-                lx = 0.0
-                for j in range(npnt):
-                    z = (x-xlowsrt[j])/h
-                    lx += np.exp(-0.5*z*z)
-                lx /= npnt*h *np.sqrt(2.0*np.pi)
-                gx = 0.0
-                for j in range(len(xhighsrt)):
-                    z = (x-xhighsrt[j])/hh
-                    gx += np.exp(-0.5*z*z)
-                gx /= len(xhighsrt)*hh *np.sqrt(2.0*np.pi)
-                aquisition[itry] = gx/lx
-            #...Pick nbatch of minimum aquisition points
-            idxsort = np.argsort(aquisition)
-            xcandidates[:,idim] = xs[idxsort[0:self.nbatch]]
-            # print('  aquisition=',aquisition[idxsort[0:self.nbatch]])
-            # print('  xcandidates=',xcandidates[:,idim])
-        #...Create sample with xcandidate as variables
+        loss_mean = np.mean(losses)
+        loss_std = np.std(losses)
+        icov = np.linalg.inv(self.cov)
+
+        #...New inverse covariance matrix
+        new_icov = np.zeros(icov.shape)
+        new_icov += icov
+        for i in range(len(losses)):
+            xi = xs[i] -self.mean
+            coeff = (losses[i] -loss_mean)/(loss_std*N)
+            x_outer = np.outer(xi,xi)
+            new_icov += self.beta *coeff \
+                *np.dot(icov, np.dot(x_outer, icov))
+        #...New mean
+        new_mean = np.zeros(self.mean.shape)
+        new_mean += self.mean
+        new_cov = np.linalg.inv(new_icov)
+        for i in range(len(losses)):
+            xi = xs[i] -self.mean
+            coeff = (losses[i] -loss_mean)/(loss_std*N)
+            new_mean -= self.beta *coeff \
+                *np.dot(np.dot(new_cov, icov), xi)
+
+        #...Create candidates with variables sampled from new mean and cov
+        self.cov = new_cov
+        self.mean = new_mean
+        zero_mean = np.zeros(self.ndim)
+        sqcov = scipy.linalg.sqrtm(self.cov)
         candidates = []
         for ib in range(self.nbatch):
+            #...Create 
+            zi = np.random.multivariate_normal(zero_mean, np.eye(self.ndim))
+            xi = self.mean + np.dot(sqcov, zi)
             self.iidinc += 1
             smpl = Individual(self.iidinc, self.vnames)
             vsnew = {}
             for j,k in enumerate(self.vnames):
-                vsnew[k] = xcandidates[ib,j]
+                vsnew[k] = xi[j]
             smpl.set_variables(vsnew, self.slims)
             candidates.append(smpl)
         return candidates
 
-    def _candidates_by_WPE(self,veps=1e-8,temperature=1.0):
+    def _candidates_by_fastINGO(self, ):
         """
-        Create candidates by using WPE.
+        Create candidates by the fastINGO algorithm.
         """
-        losses = self.history_db.loss
-        if len(self.history_db) > self.ntrial:
-            iargs = np.argpartition(losses, self.ntrial)
-            #tmpsmpls = [ self.history[i] for i in iargs[:self.ntrial] ]
-            tmpsmpls = [ ind_from_db(self.history_db,idx,self.vnames,self.slims)
-                         for idx in iargs[:self.ntrial] ]
-            losses = losses[ iargs[:self.ntrial] ]
-        else:
-            #tmpsmpls = copy.copy(self.history)
-            tmpsmpls = [ ind_from_db(self.history_db,idx,self.vnames,self.slims)
-                         for idx in self.history_db.index ]
+        N = self.nbatch
+        losses = np.zeros(len(self.candidates))
+        xs = np.zeros((len(losses),self.ndim))
+        for i, ci in enumerate(self.candidates):
+            losses[i] = ci.loss
+            for j,vn in enumerate(ci.vnames):
+                xs[i,j] = ci.vs[vn]
 
-        vmin = losses.min()
-        wgts = np.array([ np.exp(-(v-vmin)/(vmin+veps)/temperature)
-                          for v in losses ])
-        xtmps = np.zeros((len(tmpsmpls),self.ndim))
-        for i in range(len(tmpsmpls)):
-            for j,k in enumerate(self.vnames):
-                xtmps[i,j] = tmpsmpls[i].vs[k]
-        #...Sampling variable candidates
-        xcandidates = np.empty((self.nbatch,self.ndim))
-        for idim in range(self.ndim):
-            key = self.vnames[idim]
-            # xhmin = self.hlims[key][0]
-            # xhmax = self.hlims[key][1]
-            xhmin = self.slims[key][0]
-            xhmax = self.slims[key][1]
-            xsrt = np.sort(xtmps[:,idim])
-            #...Determine smoothness parameter, h, by Silverman's method
-            q75, q25 = np.percentile(xsrt, [75,25])
-            sgm = min(np.std(xsrt), (q75-q25)/1.34)
-            h = 1.06 *sgm /np.power(len(xsrt), 1.0/5)
-            xs = np.empty(self.nbatch)
-            for ib in range(self.nbatch):
-                ipnt = random.choices([j for j in range(len(wgts))],weights=wgts)[0]
-                xi = xtmps[ipnt,idim]
-                r = h *np.sqrt(-2.0*np.log(np.random.random()))
-                th = 2.0 *np.pi *np.random.random()
-                x = xi + r*np.cos(th)
-                #...Wrap by slims
-                x = min(max(x,xhmin),xhmax)
-                xs[ib] = x
-            xcandidates[:,idim] = xs[:]
-        
-        #...Create sample with xcandidate as variables
+        loss_mean = np.mean(losses)
+        loss_std = np.std(losses)
+        icov = np.linalg.inv(self.cov)
+
+        #...New inverse covariance matrix
+        new_icov = np.zeros(icov.shape)
+        new_icov += icov
+        for i in range(len(losses)):
+            xi = xs[i] -self.mean
+            coeff = (losses[i] -loss_mean)/(loss_std*N)
+            x_outer = np.outer(xi,xi)
+            new_icov += self.beta *coeff \
+                *np.dot(icov, np.dot(x_outer, icov))
+        #...New mean
+        new_mean = np.zeros(self.mean.shape)
+        new_mean += self.mean
+        new_cov = np.linalg.inv(new_icov)
+        new_cov = diag_only(new_cov)
+        for i in range(len(losses)):
+            xi = xs[i] -self.mean
+            coeff = (losses[i] -loss_mean)/(loss_std*N)
+            new_mean -= self.beta *coeff \
+                *np.dot(np.dot(new_cov, icov), xi)
+
+        #...Create candidates with variables sampled from new mean and cov
+        self.cov = new_cov
+        self.mean = new_mean
+        zero_mean = np.zeros(self.ndim)
+        sqcov = scipy.linalg.sqrtm(self.cov)
         candidates = []
         for ib in range(self.nbatch):
+            #...Create 
+            zi = np.random.multivariate_normal(zero_mean, np.eye(self.ndim))
+            xi = self.mean + np.dot(sqcov, zi)
             self.iidinc += 1
             smpl = Individual(self.iidinc, self.vnames)
             vsnew = {}
             for j,k in enumerate(self.vnames):
-                vsnew[k] = xcandidates[ib,j]
+                vsnew[k] = xi[j]
             smpl.set_variables(vsnew, self.slims)
             candidates.append(smpl)
-        
         return candidates
 
+
+    def _report(self,):
+        for i,ci in enumerate(self.candidates):
+            vi = ci.get_variables()
+            li = ci.loss
+            print(f' {vi} --> {li:8.4f}')
+        sys.stdout.flush()
+        return None
+
+        
+    def _sanity_check(self,):
+        eigvals, eigvecs = np.linalg.eig(self.cov)
+        rvals = np.real(eigvals)
+        print(' mean:  ',end='')
+        for i in range(len(self.mean)):
+            print(f' {self.mean[i]:6.3f}',end='')
+        print('')
+        print(' std:   ',end='')
+        for i in range(len(self.mean)):
+            print(f' {np.sqrt(self.cov[i,i]):6.3f}',end='')
+        print('')
+        print(' evals: ',end='')
+        for i in range(len(self.mean)):
+            print(f' {rvals[i]:6.3f}',end='')
+        print('')
+        if np.any(np.abs(rvals) < np.finfo(float).eps):
+            raise ValueError(' Some eigen values of Cov[X] are zero...\n'
+                             +' --> Inversion of Cov[X] will fail.')
+        elif np.any(rvals < 0.0):
+            # print(' Real(eigen values):')
+            # print('   ',rvals)
+            raise ValueError(' Some eigen values of Cov[X] are negative...')
+        sys.stdout.flush()
+        return None
+
+    
     def write_variables(self,smpl,fname='in.vars.optzer',**kwargs):
         if self.write_func != None:
             self.write_func(smpl.vnames, smpl.vs, self.slims, self.hlims,
                             fname, **kwargs)
         return None
 
+def diag_only(mat):
+    N = len(mat)
+    for i in range(N):
+        for j in range(N):
+            if j == i: continue
+            mat[i,j] = 0.0
+    return mat
+    
 def main():
     args = docopt(__doc__.format(os.path.basename(sys.argv[0])))
+    ngen = int(args['-n'])
+    kwargs = {}
+    kwargs['print_level'] = int(args['--print-level'])
+    kwargs['algorithm'] = int(args['--algorithm'])
+    # kwargs['update_vrange'] = int(args['--update-vrange'])
+
+    vnames = ['x','y']
+    vs = { 'x':1.0, 'y':-0.5 }
+    slims = { 'x':[-2.0, 2.0],'y':[-2.0, 2.0] }
+    hlims = { 'x':[-2.0, 2.0],'y':[-2.0, 2.0] }
+    
+    ingo = INGO(10, 0.25, vnames, vs, slims, hlims,
+                testfunc, write_vars_for_testfunc, **kwargs)
+    ingo.run(ngen)
     return None
 
 if __name__ == "__main__":
