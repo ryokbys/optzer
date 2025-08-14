@@ -3,7 +3,7 @@ num_iteration            10000
 min_iteration               5
 num_out_energy           1000
 
-flag_out_pmd                2
+# flag_out_pmd                2
 num_out_pmd               100
 flag_sort                   1
 
